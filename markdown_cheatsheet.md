@@ -1,11 +1,11 @@
 # Simple Markdown Cheat Sheet
 
-Markdown is a plain-text format used to create formatted notes and documentation on GitHub [3, 4].
+Markdown is a plain-text format used to create formatted notes and documentation on GitHub.
 
 ---
 
 ## 1. Headings
-Use `#` symbols at the beginning of a line to set heading levels [5, 6]:
+Use `#` symbols at the beginning of a line to set heading levels:
 
 # Main Title (Level 1)
 ## Section Title (Level 2)
@@ -14,16 +14,17 @@ Use `#` symbols at the beginning of a line to set heading levels [5, 6]:
 ---
 
 ## 2. Text Formatting
-Format text using simple characters [7]:
+Format text using simple characters:
 
 *Italic text*
 **Bold text**
+**_Bold and Italic_**
 ~~Strikethrough text~~
 
 ---
 
 ## 3. Lists
-Create bullet lists or numbered lists [8]:
+Create bullet lists or numbered lists:
 
 ### Bullet List
 * Item 1
@@ -35,20 +36,25 @@ Create bullet lists or numbered lists [8]:
 2. Second step
 3. Third step
 
+### Task List
+- [ ] Open task
+- [x] Completed task
+
 ---
 
 ## 4. Code & Commands
-Use single backticks for inline code, or triple backticks for multi-line code blocks [7, 9, 10]:
+Use single backticks for inline code, or triple backticks for multi-line code blocks:
 
 Inline command: `git status`
 
-Code block with Bash syntax highlighting [11]:
+Code block with Bash syntax highlighting:
 ```bash
 # Terminal commands
 cd ~/Lab_Gen_Comparata
 git add README.md
 git commit -m "Add documentation"
 git push
+```
 
 ---
 
