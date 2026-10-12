@@ -148,3 +148,42 @@ lrwxrwxrwx 1 STUDENTI^marta.verant STUDENTI^domain users          95 Oct 12 11:4
 -rw-r--r-- 1 STUDENTI^marta.verant STUDENTI^domain users         929 Oct 12 12:37 stats_trimmomatic.log
 (assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/02_KmerBased_GenomeSurvery$
 
+(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/02_KmerBased_GenomeSurvery$ ka
+ka: command not found                                                                                       ((assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/02_KmerBased_GenomeSurvery$ kat
+Command 'kat' not found, but there are 15 similar ones.
+(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/02_KmerBased_GenomeSurvery$ conda activate kat
+(kat) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/02_KmerBased_GenomeSurvery$ kat //help
+Kmer Analysis Toolkit (KAT) V2.4.2
+
+kat.cc(108): Throw in function Mode parseMode(std::string)
+Dynamic exception type: boost::wrapexcept<KatException>
+std::exception::what: std::exception
+[KatError*] = Could not recognise mode string: //help
+(kat) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/02_KmerBased_GenomeSurvery$
+
+
+kat hist -t <THREADS> -m <MER LENGTH> -o <OUTPUT PREFIX> <paired_1> <paired_2>
+(kat) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/02_KmerBased_GenomeSurvery$ kat hist -t 8 -m 27 -o anoste_27 SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq
+Kmer Analysis Toolkit (KAT) V2.4.2
+
+Running KAT in HIST mode
+------------------------
+
+Input 1 is a sequence file.  Counting kmers for input 1 (SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq) ...
+Warning: Specified hash size insufficent - attempting to double hash size...
+Warning: Specified hash size insufficent - attempting to double hash size...
+Warning: Specified hash size insufficent - attempting to double hash size...
+Warning: Specified hash size insufficent - attempting to double hash size...
+Warning: Specified hash size insufficent - attempting to double hash size...
+Warning: Specified hash size insufficent - attempting to double hash size...
+Warning: Specified hash size insufficent - attempting to double hash size...
+Warning: Specified hash size insufficent - attempting to double hash size... success!
+ success!
+ success!
+ success!
+ success!
+ success!
+ success!
+ success!
+
+kat hist -t 8 -m 27 -o anoste_27 SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq
