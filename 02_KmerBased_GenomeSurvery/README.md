@@ -128,4 +128,23 @@ SRR11672503_1_fastqc.zip   SRR11672503_2_fastqc.html  SRR11672503_2.fastq.gz
 (assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/02_KmerBased_GenomeSurvery$
 (assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/02_KmerBased_GenomeSurvery$ cp /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_fastqc.html .
 
+.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/02_KmerBased_GenomeSurvery$ ls
+SRR11672503_1_fastqc.html  SRR11672503_1.fastq.gz      SRR11672503_1_unpaired.fastq  SRR11672503_2_fastqc.zip  SRR11672503_2_paired.fastq    stats_trimmomatic.log
+SRR11672503_1_fastqc.zip   SRR11672503_1_paired.fastq  SRR11672503_2_fastqc.html     SRR11672503_2.fastq.gz    SRR11672503_2_unpaired.fastq
+(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/02_KmerBased_GenomeSurvery$ ll
+total 79424316
+drwxr-xr-x 2 STUDENTI^marta.verant STUDENTI^domain users        4096 Oct 12 11:50 ./
+drwxr-xr-x 4 STUDENTI^marta.verant STUDENTI^domain users        4096 Oct  6 12:27 ../
+-rw-r--r-- 1 STUDENTI^marta.verant STUDENTI^domain users      570969 Oct 12 11:41 SRR11672503_1_fastqc.html
+-rw-r--r-- 1 STUDENTI^marta.verant STUDENTI^domain users      320326 Oct 12 11:41 SRR11672503_1_fastqc.zip
+lrwxrwxrwx 1 STUDENTI^marta.verant STUDENTI^domain users          95 Oct 12 11:46 SRR11672503_1.fastq.gz -> /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/00_reads/SRR11672503_1.fastq.gz
+-rw-r--r-- 1 STUDENTI^marta.verant STUDENTI^domain users 40316211886 Oct 12 12:37 SRR11672503_1_paired.fastq
+-rw-r--r-- 1 STUDENTI^marta.verant STUDENTI^domain users   701708094 Oct 12 12:37 SRR11672503_1_unpaired.fastq
+-rw-r--r-- 1 STUDENTI^marta.verant STUDENTI^domain users      573040 Oct 12 11:41 SRR11672503_2_fastqc.html
+-rw-r--r-- 1 STUDENTI^marta.verant STUDENTI^domain users      324567 Oct 12 11:41 SRR11672503_2_fastqc.zip
+lrwxrwxrwx 1 STUDENTI^marta.verant STUDENTI^domain users          95 Oct 12 11:47 SRR11672503_2.fastq.gz -> /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/00_reads/SRR11672503_2.fastq.gz
+-rw-r--r-- 1 STUDENTI^marta.verant STUDENTI^domain users 40190009686 Oct 12 12:37 SRR11672503_2_paired.fastq
+-rw-r--r-- 1 STUDENTI^marta.verant STUDENTI^domain users   120647404 Oct 12 12:37 SRR11672503_2_unpaired.fastq
+-rw-r--r-- 1 STUDENTI^marta.verant STUDENTI^domain users         929 Oct 12 12:37 stats_trimmomatic.log
+(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/02_KmerBased_GenomeSurvery$
 
