@@ -101,14 +101,18 @@ kat hist -t 8 -m 27 -o anoste_27 SRR11672503_1_paired.fastq SRR11672503_2_paired
 - `-m 27`: Sets k-mer length to *k=27* (standard choice for insect genome surveys).
 - `-o anoste_27`: Output file prefix.
 - Inputs: `SRR11672503_1_paired.fastq` and `SRR11672503_2_paired.fastq`.
+- Generated Output Files: Running `kat hist` automatically creates two output files:
+
+ - `anoste_27.png`: A visual plot/graph of the k-mer spectrum for quick inspection.
+ - `anoste_27`: The raw text data file containing numerical k-mer counts.
 
 ### Saving and Pushing KAT Outputs  
 Rename the output histogram file and commit it to GitHub:
 ```bash
-# Rename the generated histogram file
+# Rename the raw data file so GenomeScope recognizes it
 mv anoste_27 anoste_27.hist
 
-# Commit and push to GitHub
+# Commit and push both the plot (.png) and histogram (.hist) to GitHub
 git add anoste_27.hist anoste_27.png
 git commit -m "Add KAT k-mer hist27 output"
 git push
