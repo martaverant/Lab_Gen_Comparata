@@ -4,107 +4,110 @@ This document explains the setup of our computing environment, SSH server access
 
 ---
 
-## 1. Remote Server Access (SSH)
+## 1. Connecting to the Remote Server (SSH)
 
-We connect to the university teaching server using SSH (Secure Shell):
+We access the university server using the SSH command line:
 
 ```bash
 ssh studenti.marta.verant@137.204.142.242
 ```
 *Note: Enter the password for your Unibo account when prompted.*
 
-### SSH Key Setup for GitHub
-To connect securely to GitHub without typing passwords every time:
-aber eigentlich muss ich jedes mal das passwort eingeben nachdem ich didattica eigegebn habe??? deshalb glaube ich haben wir das nicht gemacht?  
-1. Generate SSH key pair:
+### Setting Up an SSH Key for GitHub
+An SSH key lets you connect your server account to GitHub securely without typing your password every time.  
+
+1. Create a new SSH key:
    ```bash
    ssh-keygen -t ed25519 -C "marta.verant@studio.unibo.it"
    ```
-2. Copy the public key (`~/.ssh/id_ed25519.pub`) and add it to your GitHub account under **Settings > SSH and GPG keys**.
-3. Enable SSH agent on startup by adding this to `~/.bash_profile`:
+2. Add the key to GitHub:Copy the entire contents of (`~/.ssh/id_ed25519.pub`) and paste it into **GitHub under Settings > SSH and GPG keys > New SSH key**.
+3. Automatically load your SSH key when you log in:
+   Add these two lines to the end of your (`~/.bash_profile`) file:
    ```bash
    eval "$(ssh-agent -s)"
    ssh-add ~/.ssh/id_ed25519
    ```
 
-#### SSH Shortcut (Alias)
-To quickly connect to the course server without typing the full SSH command every time, set up a Bash alias in `~/.bash_profile`:
+#### Creating an SSH Shortcut (Alias)
+Instead of typing the full IP address every time, you can create a shortcut command. Add this line to `~/.bash_profile`:
 
 ```bash
 alias didattica='ssh studenti.marta.verant@137.204.142.242'
 ```
+*Now you can simply type didattica in your terminal to log in.*
+
 
 ---
 
 ## 2. Git & GitHub Workflow
 
-### Initial Setup
-Set your identity for Git:
+### First-Time Configuration
+Set your name and email so Git tags your work correctly:
 
 ```bash
 git config --global user.name "Marta Verant"
 git config --global user.email "marta.verant@studio.unibo.it"
 ```
 
-### Cloning Repository
-Clone the online course repository to the server:
+### Download (Clone) the Repository
+Download a copy of the course repository to your server account:
 
 ```bash
 git clone git@github.com:martaverant/Lab_Gen_Comparata.git
 ```
 
-### Daily Git Commands
+### Essential Git Commands
 
 | Command | Description |
 | :--- | :--- |
-| `git status` | Check which files are modified or untracked |
-| `git add <file>` | Add changes to the staging area |
-| `git commit -m "message"` | Save a snapshot of staged changes with a note |
-| `git push origin main` | Upload local commits to GitHub |
-| `git pull` | Fetch and merge latest changes from GitHub |
+| `git status` | Shows modified, deleted, or new files |
+| `git add <file>` | Prepares modified files to be saved (stages changes) |
+| `git commit -m "message"` | Saves staged changes locally with a descriptive note |
+| `git push origin main` | Sends your saved local commits to GitHub |
+| `git pull` | Downloads and merges the latest changes from GitHub to your server |
 
 ---
 
-## 3. Conda & Mamba Software Environments
+## 3. Managing Software with Conda & Mamba
 
-Bioinformatics tools often require different software versions and dependencies. We use Conda/Mamba environments to keep tools isolated and prevent conflicts.
+Bioinformatics tools require specific settings and Python versions. Conda keeps these tools separated in isolated "environments" so they do not break each other.
 
-### Essential Conda Commands
+### Basic Conda Commands
 
 | Command | Description |
 | :--- | :--- |
-| `conda env list` | View all available environments on the server |
-| `conda activate <env_name>` | Activate a specific environment |
-| `conda deactivate` | Exit the current environment |
+| `conda env list` | Lists all installed software environments |
+| `conda activate <env_name>` | Switches to a specific tool environment |
+| `conda deactivate` | Exits the current environment back to base |
 
 ### Course Environments
-- **base**: Default environment (R).
-- **assembly**: Tools for QC, trimming, and assembly (FastQC, Trimmomatic, wtdbg2, Samtools, BUSCO).
-  ```bash
-  conda activate assembly
-  ```
-- **kat**: K-mer Analysis Toolkit (KAT).
+- **base**: Default environment with basic libraries and R.
+- **assembly**: Quality control, read cleaning, and assembly tools (FastQC, Trimmomatic, wtdbg2, Samtools, BUSCO).
+   ```bash
+   conda activate assembly
+   ```
+- **kat**: K-mer Analysis Toolkit (KAT) for inspecting raw DNA data.
   ```bash
   conda activate kat
   ```
-- **sequence**: Downstream processing and annotation tools (BlobTools, NCBI Datasets).
+- **sequence**: Downstream filtering and contamination check tools (BlobTools, NCBI Datasets).
   ```bash
   conda activate sequence
   ```
-- **tree**: Phylogenomics and tree inference tools (OrthoFinder, IQ-TREE).
+- **tree**: Evolutionary analysis tools (OrthoFinder, IQ-TREE).
   ```bash
   conda activate tree
   ```
 
 ---
 
-## 4. Keeping Jobs Running with tmux
+## 4. Keeping Tasks Running with tmux
 
-Long-running bioinformatics processes can stop if the SSH connection breaks. We use `tmux` to keep processes running in the background on the server.
+Long-running bioinformatics processes can stop if the SSH connection breaks. `tmux` creates background sessions that keep your jobs running on the server even when you log off.
 
-### Basic tmux Workflow
+### Step-by-Step tmux Workflow
 
-1. **Start a new session:**
+1. **Start a new background session:**
    ```bash
    tmux new -s general
    ```
@@ -113,26 +116,24 @@ Long-running bioinformatics processes can stop if the SSH connection breaks. We 
    Press <kbd>Ctrl</kbd> + <kbd>a</kbd>, then <kbd>d</kbd>.  
    *(Note: On standard tmux setups it is <kbd>Ctrl</kbd> + <kbd>b</kbd>, <kbd>d</kbd>, but our server uses <kbd>Ctrl</kbd> + <kbd>a</kbd>).*
 
-3. **Re-attach to an existing session:**
+3. **Reconnect to an existing session:**
    ```bash
    tmux a -t general
    ```
 
-4. **List running tmux sessions:**
+4. **See all active sessions:**
    ```bash
    tmux ls
    ```
 
 ---
 
-## 5. Project Directory Structure
+## 5. Repository Directory Layout
 
-Our project focuses on the comparative genomics of *Anopheles stephensi* (mosquito vector). The repository is organized into the following modules:
+This project contains code and pipelines for analyzing the Anopheles stephensi mosquito genome. Directories are organized by step:
 
-- `00_Bash/` : Shell commands and basic scripts.
-- `01_ComputerEnv_ProjectWorkflow/` : Computing environment, SSH, Git, Conda.
-- `02_KmerBased_GenomeSurvey/` : Raw read QC (FastQC, MultiQC), trimming (Trimmomatic), and K-mer survey (KAT).
-- `03_GenomeAssembly/` : Assembly (wtdbg2), polishing (Hypo), contamination check (BlobTools), and scaffolding (RagTag).
-- `04_GenomeAnnotation/` : Gene prediction and structural annotation (MAKER).
+- `00_Bash/` : General utility shell scripts.
+- `01_ComputerEnv_ProjectWorkflow/` : Guides for environment setup, Git, and server instructions.
+- `02_KmerBased_GenomeSurvey/` : Read quality control (FastQC, MultiQC), adapter removal (Trimmomatic), and genome size estimation (KAT).
 
 *(to be continued...)*
