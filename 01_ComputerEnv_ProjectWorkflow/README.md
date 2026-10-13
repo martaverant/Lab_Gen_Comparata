@@ -18,7 +18,7 @@ To connect securely to GitHub without typing passwords every time:
 
 1. Generate SSH key pair:
    ```bash
-   ssh-keygen -t ed25519 -C "marta.verant@studenti.unibo.it"
+   ssh-keygen -t ed25519 -C "marta.verant@studio.unibo.it"
    ```
 2. Copy the public key (`~/.ssh/id_ed25519.pub`) and add it to your GitHub account under **Settings > SSH and GPG keys**.
 3. Enable SSH agent on startup by adding this to `~/.bash_profile`:
