@@ -121,9 +121,9 @@ git push
 
 
 ### GenomeScope 2.0 Profiling Steps
-1. Open the resulting `anoste_27` histogram file and remove any comment lines at the beginning.
+1. Open the resulting `anoste_27.hist` histogram file and remove any comment lines at the beginning.
 2. Upload the cleaned histogram file to [GenomeScope 2.0](http://qb.cshl.edu/genomescope/genomescope2.0/).
-3. View pre-computed analysis results at the http://genomescope.org/analysis.php?code=97ab6nlVpU3H5hDzfqAy.
+3. View pre-computed analysis results at http://genomescope.org/analysis.php?code=97ab6nlVpU3H5hDzfqAy.
 4.
 
 
