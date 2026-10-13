@@ -15,7 +15,7 @@ ssh studenti.marta.verant@137.204.142.242
 
 ### SSH Key Setup for GitHub
 To connect securely to GitHub without typing passwords every time:
-
+aber eigentlich muss ich jedes mal das passwort eingeben nachdem ich didattica eigegebn habe??? deshalb glaube ich haben wir das nicht gemacht?  
 1. Generate SSH key pair:
    ```bash
    ssh-keygen -t ed25519 -C "marta.verant@studio.unibo.it"
