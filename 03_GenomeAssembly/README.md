@@ -130,6 +130,8 @@ ln -s ../../02_KmerBased_GenomeSurvery/SRR11672503_1_paired.fastq .
 ln -s ../../02_KmerBased_GenomeSurvery/SRR11672503_2_paired.fastq .
 ln -s crea il link per poi utilizzare i file nel skript 
 
+
+
 conda activate assembly
 
 come si lancia lo skript? 
@@ -137,4 +139,89 @@ bash mapping.sh 8 Anoste_raw.fasta SRR11672503_1_paired.fastq SRR11672503_2_pair
 skript finito, ma qualcosa non va vediamo domani
 
 
+03/11/2026
+entrare nella screen tmux a -t mapping
+nano mapping.sh
 
+# aggiungiamo anche per LONG reads e agiustiamo il commando (SERNZA $ davanti alle variabili): 
+map-pb invece di sr
+long reads soltanto in una direzione 
+#!/bin/bash
+
+# Mapping short and long reads on assembly
+
+CPU=$1
+INPUT=$2
+SR_1=$3
+SR_2=$4
+PREFIX=$5
+LR=$6
+
+
+# Mapping SHORT reads
+minimap2 -ax sr --MD -t "$CPU" "$INPUT" "$SR_1" "$SR_2" > "$PREFIX"_sr.sam
+
+# conversion SAM into BAM
+samtools view -b "$PREFIX"_sr.sam "$PREFIX"_sr.bam
+rm "$PREFIX"_sr.sam
+
+# sorting and indexing of BAM file
+samtools sort -@"$CPU" -o "$PREFIX"_sr_sorted.bam "$PREFIX"_sr.bam
+samtools index "$PREFIX"_sr_sorted.bam
+
+
+
+# Mapping LONG reads
+minimap2 -ax map-pb --MD -t "$CPU" "$INPUT" "$LR" > "$PREFIX"_lr.sam
+
+# conversion SAM into BAM
+samtools view -b "$PREFIX"_lr.sam "$PREFIX"_lr.bam
+rm "$PREFIX"_lr.sam
+
+# sorting and indexing of BAM file
+samtools sort -@"$CPU" -o "$PREFIX"_lr_sorted.bam "$PREFIX"_lr.bam
+samtools index "$PREFIX"_lr_sorted.bam
+control S -> salvare 
+control x -> uscire 
+
+../ -> per path relativi 
+senza puntini -> path assoluto (ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/00_reads/SRR11672506.fastq.gz .)
+SRR11672506.fastq.gz -> abbiamo aggiunto un link (cyano), grigio (file), rosso (rotto o ?), rosa (immagine) 
+
+less mapping.sh
+cat mapping.sh
+head mapping.sh (prime 10 righe del file) 
+
+bash mapping.sh 8 Anoste_raw.fasta SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq Anoste_pol SRR11672506.fastq.gz
+control + a poi C -> fare una nuova screen 
+control + a p -> previous
+control + a n -> next
+
+salvare il file di busco: 
+git add short_summary.specific.diptera_odb12.Anoste_raw.txt
+git pull
+git commit -m "QC BUSCO on raw assembly" (-m messaggio)
+git push
+
+
+vedi su 05 tutto scritto: 
+risultato dobbiamo fare un GENOME REPORT
+per esame 4/5 genomi di ditteri
+5/6 specie, immaginarvi ricerca biologica (trasmissione malattie, resistenza ambientale/patogeni ecc.) 
+1-2 paper leggere su quale specie vogliamo lavorare
+cercare e scaricarle le informazioni 
+-> database 
+NCBI Datasets  -> genome (richerca) -> diptera filtare i risultati -> genoma annotato (annotated genomes) -> qui possiamo scegliere tutto 
+poi giocate cun po con i filtri 
+
+dobbiamo crare una tabella con informazioni 
+scarichiamo il proteoma = genoma annotato 
+deve avere: prima colonna: separato da tabulazione -> session number 
+seconda colonna nome completo con underscore il spazio non esiste (genbank o Refseq)
+terza: codice a 6 lettere 3 lettere del genere 3 della specie e solo la prima lettere è maiuscola 
+
+caratteristiche di assembly sono importante e sottolinieate, report comparativo 
+comparare con altre specie 
+grandezza genoma, contenuto ripetitivo 
+COMPARARE 
+file in quale siamo interessati .fna.gz .gff.gz (contiene la annotazione) + inofrmazioni delle proteine
