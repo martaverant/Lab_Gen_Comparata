@@ -214,7 +214,7 @@ cercare e scaricarle le informazioni
 NCBI Datasets  -> genome (richerca) -> diptera filtare i risultati -> genoma annotato (annotated genomes) -> qui possiamo scegliere tutto 
 poi giocate cun po con i filtri 
 
-dobbiamo crare una tabella con informazioni 
+dobbiamo creare una tabella con informazioni 
 scarichiamo il proteoma = genoma annotato 
 deve avere: prima colonna: separato da tabulazione -> session number 
 seconda colonna nome completo con underscore il spazio non esiste (genbank o Refseq)
@@ -225,3 +225,75 @@ comparare con altre specie
 grandezza genoma, contenuto ripetitivo 
 COMPARARE 
 file in quale siamo interessati .fna.gz .gff.gz (contiene la annotazione) + inofrmazioni delle proteine
+
+
+il commando non è andato a buon fine perché non c'era abbastanza spazio per salvare. 
+BAM and BAI I mapping
+abbiamo fatto i link dei file completi: 
+ln -s con tutti questi path: 
+/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/01_polishing/Anoste_raw_pb_sorted.bam     
+/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/01_polishing/Anoste_raw_pb_sorted.bam.bai 
+/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/01_polishing/Anoste_raw_sr_sorted.bam     
+/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/01_polishing/Anoste_raw_sr_sorted.bam.bai
+ . 
+
+ e anche per questo: raw assembly Mirko
+/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/00_assembly_raw/Anoste_raw.fasta .
+
+dopo questo: 
+
+hypo -d <DRAFT_Contigs> -r @<READS_PATH> -s <APPROXIMATE_GENOMESIZE> -c <SHORT_READSCOVERAGE> -b <SORTED_BAM_SR> -B <SORTED_BAM_PB> -t <NUMBER_THREADS>
+
+ci manca però SHORT_READSCOVERAGE
+che otterremmo con 
+compito: capire come funziona questo commando: 
+mosdepth -n --fast-mode --by 500 <...>
+possiamo utilizzare IA e soprattutto guardare nel help o nel manuale
+
+mosdepth -n --fast-mode --by 500 Anoste_PB Anoste_raw_pb_sorted.bam
+mosdepth -n --fast-mode --by 500 Anoste_SR Anoste_raw_sr_sorted.bam
+
+ -n: Non genera un file contenente la coverage di ogni singola base.
+- --fast-mode: Rende il calcolo più veloce, semplificando il calcolo della coverage.
+- --by 500: Divide il genoma in finestre di 500 bp e calcola la coverage media per ciascuna finestra.
+
+la soluzione: mosdepth -n --fast-mode --by 500 Anoste_raw_[pb|sr] <sorted_bam>
+zcat Anoste_raw_[pb|sr].regions.bed.gz | awk '{sum += $4;count++} END {print sum / count}' > <OUTFILE_coverage>
+
+
+
+(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$ zcat Anoste_SR.regions.bed.gz | awk '{sum += $4;count++} END {print sum / count}' > Anoste_SR_coverage.txt
+(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$ cat Anoste_SR_coverage.txt
+soluzione: 136.412
+(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$ zcat Anoste_PB.regions.bed.gz | awk '{sum += $4;count++} END {print sum / count}' > Anoste_PB_coverage.txt
+(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$ cat Anoste_PB_coverage.txt
+soluzione: 102.621
+(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$
+
+per lanciare il prossimo script: 
+nano polishing.sh 
+per aprire una finestra con 
+control altro slash o barretta dirtta
+control +a o -> muovere tra le due finestre
+
+
+hypo -d <DRAFT_Contigs> -r @<READS_PATH> -s <APPROXIMATE_GENOMESIZE> -c <SHORT_READSCOVERAGE> -b <SORTED_BAM_SR> -B <SORTED_BAM_PB> -t <NUMBER_THREADS>
+
+hypo -d Anoste_raw.fasta -r @<READS_PATH> -s 227054799 -c 136 -b Anoste_raw_sr_sorted.bam -B Anoste_raw_pb_sorted.bam -t 8  
+
+echo -> stampare il standard output
+creare la variabile R1 e R2 nel file delle reads
+ R1="/home/PERSONALE/mirko.martini3/Lab_
+                                                                                                                                       │CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq"
+                                                                                                                                       │(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$ R2="/home/PERSONALE/mirko.martini3/Lab_
+                                                                                                                                       │CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_2_paired.fastq"
+                                                                                                                                       │(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$ echo $R1
+                                                                                                                                       │/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq
+                                                                                                                                       │(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$
+
+echo -e "$R1\n$R2" > reads.txt
+-e (serve a scrivere il \n) \n = a capo/new line
+
+hypo -d Anoste_raw.fasta -r @reads.txt -s 227054799 -c 136 -b Anoste_raw_sr_sorted.bam -B Anoste_raw_pb_sorted.bam -t 8
+
+tirato fuori dallo script e poi lanciarlo 
