@@ -188,14 +188,15 @@ control x -> uscire
 senza puntini -> path assoluto (ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/00_reads/SRR11672506.fastq.gz .)
 SRR11672506.fastq.gz -> abbiamo aggiunto un link (cyano), grigio (file), rosso (rotto o ?), rosa (immagine) 
 
-less mapping.sh
-cat mapping.sh
+less mapping.sh (entra nel file) 
+cat mapping.sh (scrive nella screen il testo del file)
 head mapping.sh (prime 10 righe del file) 
 
 bash mapping.sh 8 Anoste_raw.fasta SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq Anoste_pol SRR11672506.fastq.gz
 control + a poi C -> fare una nuova screen 
 control + a p -> previous
 control + a n -> next
+control + a x -> cancellare
 
 salvare il file di busco: 
 git add short_summary.specific.diptera_odb12.Anoste_raw.txt
@@ -297,3 +298,195 @@ echo -e "$R1\n$R2" > reads.txt
 hypo -d Anoste_raw.fasta -r @reads.txt -s 227054799 -c 136 -b Anoste_raw_sr_sorted.bam -B Anoste_raw_pb_sorted.bam -t 8
 
 tirato fuori dallo script e poi lanciarlo 
+
+lo script dobbiamo scrivere che una persona che non ha fatto il corso potrebbe fare la stessa cosa come io 
+-> mettere dentro tutto quello che pensiamo sia necessario e utile, è un script personale che dobbiamo fare anche nel futuro, scrivere tutto quello che serve
+
+10/11/2026
+tuttoo andato per sbaglio ho chiuso la finestra 
+tutta la parte manca di quantitativo e qualitativo 
+busco miglioramento qualitativo perché aumenta i numeri di geni -> cambia le basi 
+poi bo non mi ricordo recuperarlo dalla registrazione audio 
+
+
+tumx ls
+tmux a -t mapping (ricordatelo!!!)
+sarebbe anche utile scrivere un foglie con tutti i comandi che sono neccessario per muovere dagli screen ecc., per chiudere i screen (contol a + x penso non sono sicura) per i commandi che sono importanti, prima o poi li dobbiamo sapere!!  
+
+rinomina:  mv hypo_Anoste_raw.fasta Anoste_pol.fasta
+conda activate sequence (perché busco lavora con sequence) 
+export NUMEXPR_MAX_THREADS=<CPU_NUMBER>
+export NUMEXPR_MAX_THREADS=80
+busco -m <MODE> -l <LINEAGE> -c <CPU_NUMBER> -o <OUTPUT_NAME> -i <INPUT>
+busco -m geno -l $BUSCO/diptera_odb12 -c 9 -o Anoste_pol -i Anoste_pol.fasta (busco crea una cartella nel output) 
+non è andato perché non è andato 
+diversi programmi non infastidito come viene formatato un file fasta
+one line (header fasta, header fasta) 
+multi line fasta (forzatamente il programma va da capo) più leggibile
+se la riga è troppo lunga non funziona 
+raw.fasta va a capo e il nuovo file non va da capo 
+
+come lo spezzettiamo? 
+fold -w <n_characters> <input.fasta> > <output.fasta>
+fold -w 80 Anoste_pol.fasta > Anoste_pol_multi.fasta
+less -S Anoste_pol_multi.fasta per controllare 
+less -S Anoste_pol.fasta (q per uscire)
+rm Anoste_pol.fasta
+mv Anoste_pol_multi.fasta Anoste_pol.fasta
+rm -r Anoste_pol (rimuovere la cartella)
+busco -m geno -l $BUSCO/diptera_odb12 -c 9 -o Anoste_pol -i Anoste_pol.fasta
+
+kat (control qualitativo) 
+conda activate kat
+per creare i paths:
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq .
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_2_paired.fastq .
+ 
+kat comp -t <NUM_THREADS> -o <OUTPUT_PREFIX> '<FASTQ>...' <ASSEMBLY>
+kat comp -t 9 -o Anoste_pol_kat 'SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq' Anoste_pol.fasta
+ 
+genome assembly 02
+identificare le contaminazioni e eliminarle
+re mapping -> vedi script del mapping
+nuovo segno la barretta verticale | -> concatenazione dei comandi 
+usare l'output per l'input (?giusto?) 
+mapping 2 passaggio sam in bam, rimosso il sam 
+possiamo farlo in un unico passaggio del file contemporaneo
+non crea un file intermedio = appiccicare vari comandi insieme, uno al altro 
+il mapping non facciamo (abbiamo gia fatto) 
+
+annotazione tassonomica (specie, classe di geni, ecc) 
+posso creare la database structure, come e quale rimuovere?, questi commandi vanno anche messi nel quaderno di laboratorio!!!, una persona deve essere informata, noi non stiamo lanciando, ma questi commandi sono stati lanciati da Mirko -> li prendiamo da lui, sempre deve essere cosi tutto deve essere riconoscibile, provare a completarli!!! 
+minimap2, de essere completato da re-mapping non con quelli originali, è simile allo script ma non è uguali, chiedere a Mikro se abbiamo dubbio anche per mail
+
+
+minimap2 --secondary=no --MD -ax sr -t <NUMBER_CORE> <ASSEMBLY> <FASTQ_R1> <FASTQ_R2> | samtools view -Sb - > <OUT_BAMFILE>.bam
+samtools sort -@<n_cores> -o <OUT_SORTED_BAMFILE>_sorted.bam Anoste_pol.bam
+rm Anoste_pol.bam
+samtools index Anoste_pol_sorted.bam
+
+blastn
+blastn -query <ASSEMBLY> -db <PATH/TO/nt/> -outfmt '6 qseqid staxids bitscore std sscinames sskingdoms stitle' -max_target_seqs 25 -max_hsps 1 -num_threads 25 -evalue 1e-25 -out <OUTFILE>
+
+non sappiamo questo: -db <PATH/TO/nt/> -> ricordarlo prossima settimana di dirci!!! 
+
+per Blobtools: 
+nuova caretlla: 
+mkdir 02_contaminants
+cd 02_contaminants/
+
+blobtools create -i <ASSEMBLY> -b <MAPPING_FILE> -t <BLASTN_FILE> -o <OUTPUT_PREFIX>
+blobtools view -i <JSON_FILE> -o <OUTPUT_PREFIX>
+blobtools plot -i <JSON_FILE> -o <OUTPUT_PREFIX>
+
+file molto grandi -> fare il link dei input (non abbiamo Mapping, blastn) 
+ln -s ../01_polishing/Anoste_pol.fasta (link del assembly)
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/02_contaminants/Anoste_pol_sorted.bam .
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/02_contaminants/Anoste_pol_sorted.bam.bai .
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/02_contaminants/Anoste_blast.tsv .
+
+blob -> sequence (importqante sempre verificare che sei nella envirnment giusta) 
+blobtools create -i Anoste_pol.fasta -b Anoste_pol_sorted.bam -t Anoste_blast.tsv -o Anoste_blob
+
+mentre guardiamo il fle busco: 
+cd Lab_Gen_Comparata/03_GenomeAssembly/01_polishing
+cd Anoste_pol
+cat short_summary.specific.diptera_odb12.Anoste_pol.txt
+ma accanto anche quello raw
+~/Lab_Gen_Comparata/03_GenomeAssembly/00_assembly_raw$ cd Anoste_raw/
+ cat short_summary.specific.diptera_odb12.Anoste_raw.txt
+ 
+-> nel polished ho più geni completi (Complete and single-copy BUSCOs) -> il mio polish ha migliorato? si
+miglioramento qualitativo 
+Assembly statistics = sono le stesse 
+ific.diptera_odb12.Anoste_raw.txt
+
+possiamo fare una tabella non i migloramenti: 
+
+Anoste_raw:
+# BUSCO version is: 6.0.0
+# The lineage dataset is: diptera_odb12 (Creation date: 2025-07-01, number of genomes: 76, number of BUSCOs: 5067)
+# Summarized benchmarking in BUSCO notation for file /home/STUDENTI/marta.verant/Lab_Gen_Comparata/03_GenomeAssembly/00_assembly_raw/Anoste_raw.fasta
+# BUSCO was run in mode: euk_genome_min
+# Gene predictor used: miniprot
+
+        ***** Results: *****
+
+        C:96.0%[S:95.2%,D:0.7%],F:0.6%,M:3.5%,n:5067,E:7.0%
+        4863    Complete BUSCOs (C)     (of which 339 contain internal stop codons)
+        4825    Complete and single-copy BUSCOs (S)
+        38      Complete and duplicated BUSCOs (D)
+        29      Fragmented BUSCOs (F)
+        175     Missing BUSCOs (M)
+        5067    Total BUSCO groups searched
+
+Assembly Statistics:
+        850     Number of scaffolds
+        850     Number of contigs
+        224097419       Total length
+        0.000%  Percent gaps
+        20 Mbp  Scaffold N50
+        20 Mbp  Contigs N50
+
+
+Dependencies and versions:
+        hmmsearch: 3.4
+        bbtools: None
+        miniprot_index: 0.18-r281
+        miniprot_align: 0.18-r281
+
+Anoste_pol: 
+# BUSCO version is: 6.0.0
+# The lineage dataset is: diptera_odb12 (Creation date: 2025-07-01, number of genomes: 76, number of BUSCOs: 5067)
+# Summarized benchmarking in BUSCO notation for file /home/STUDENTI/marta.verant/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing/Anoste_pol.fasta
+# BUSCO was run in mode: euk_genome_min
+# Gene predictor used: miniprot
+
+        ***** Results: *****
+
+        C:96.5%[S:95.8%,D:0.7%],F:0.6%,M:2.9%,n:5067,E:7.4%
+        4891    Complete BUSCOs (C)     (of which 361 contain internal stop codons)
+        4854    Complete and single-copy BUSCOs (S)
+        37      Complete and duplicated BUSCOs (D)
+        29      Fragmented BUSCOs (F)
+        147     Missing BUSCOs (M)
+        5067    Total BUSCO groups searched
+
+Assembly Statistics:
+        849     Number of scaffolds
+        849     Number of contigs
+        224753923       Total length
+        0.000%  Percent gaps
+        20 Mbp  Scaffold N50
+        20 Mbp  Contigs N50
+
+
+Dependencies and versions:
+        hmmsearch: 3.4
+        bbtools: None
+        miniprot_index: 0.18-r281
+        miniprot_align: 0.18-r281
+-> creare una tabellina con miglioramenti 
+
+
+comandi importanti, sapera la sintasse base
+perché e anche deve fare le cose corretti. e controllare le cose se sono giuste
+
+grep: è il control + f, cercare
+esempio grep ">ctg" Anoste_pol.fasta -> "parole che voglio cercare" poi file dove lo voglio cercare
+grep ">ctg" Anoste_pol.fasta | wc -l (wc=word count) e -l? (non mi ricorda)
+grep --help |less = lettura interattiva del manuale (uscire con la q)
+esempio -n (in quale riga lo trovo)
+anche -c (la stessa cosa con la pipe (|wc -l)
+
+
+awk
+sed cerca e sostituisci
+
+
+
+
+
+
+
+
