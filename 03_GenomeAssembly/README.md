@@ -1,177 +1,124 @@
-# Assembly 
+# 03_GenomeAssembly 
 
-mi manca la parte del 19/10 -> recuperare
-oggi 02/11
-(base) STUDENTI^marta.verant@SGBGA-D142242S:~$ ls
-Lab_Gen_Comparata  prova  snap
-(base) STUDENTI^marta.verant@SGBGA-D142242S:~$ cd Lab_Gen_Comparata/
-(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata$ ls
-00_Bash                         02_KmerBased_GenomeSurvery  04_GenomeAnnotation     README.md
-01_ComputerEnv_ProjectWorkflow  03_GenomeAssembly           markdown_cheatsheet.md
-(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata$ cd 03_GenomeAssembly/
-(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly$ ls
-README.md
-(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly$ mkdir 00_assembly_raw
-(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly$ mv * 00_assembly_raw/
-mv: cannot move '00_assembly_raw' to a subdirectory of itself, '00_assembly_raw/00_assembly_raw'
-(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly$ ls
-00_assembly_raw
-(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly$ cd 00_assembly_raw/
-(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/00_assembly_raw$ ls
-README.md
-(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/00_assembly_raw$ ^C
-(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/00_assembly_raw$
+## 00_assembly_raw: Get the raw assembly and do a first quality check (BUSCO).
 
-less Anoste_raw.fasta -> leggere il file
-mv Anoste_raw Anoste_raw.fasta -> move
+### 1. De novo Assembly
+The raw draft assembly (`Anoste_raw.fasta`) was generated from PacBio long reads (`SRR11672506.fastq.gz`) inside a `tmux` session using the `assembly` Conda environment (with Flye / wtdbg2):
 
-rubare un file:
-cd
-cd ../../STUDENTI/
-home/STUDENTI$ cd virginia.piccinotti/
-cp Anoste_raw.fasta ~/Lab_Gen_Comparata/03_GenomeAssembly/00_assembly_raw -> copy del file 
+```bash
+mkdir -p ~/Lab_Gen_Comparata/03_GenomeAssembly/00_assembly_raw
+cd ~/Lab_Gen_Comparata/03_GenomeAssembly/00_assembly_raw
 
-export NUMEXPR_MAX_THREADS=80
-busco -m <MODE> -l <LINEAGE> -c 8 -o Anoste_raw -i Anoste_raw.fasta
-se nn sai come lanciare un commando: dallo standatd output: busco --help | less  -> sempre verificare se siamo nella giusta environment vedi github (MirkMartLab_CompGeno/2026/01_ComputerEnv_ProjectWorkflow
+# Link PacBio long reads
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/00_reads/SRR11672506.fastq.gz .
 
- conda activate sequence
- 2 databases diptera e culicidae, diptera è quello piu ampio 
- $BUSCO = posizione del computer (variabile) placeholder
- echo variabile (computer espandera) 
- busco -m geno -l $BUSCO/diptera_odb12 -c 8 -o Anoste_raw -i Anoste_raw.fasta
-
-nuova screen: tmux new -s mapping (mapping è solo il nome della screen) 
-mkdir -> creare la cartella  mkdir 01_polishing
-cd 01_polishing/ entrare nella cartella 
-skript = miniprogramma, file di testo che veranno lanciati una dopo l'altro 
-
-Pre-requisite: Mapping short and long reads (sr ~50 mins with 30 threads + pac ~49 mins with 30 threads)
-minimap2 -ax <PRESET_Options> --MD -t <cores_number> <target.fa> <fastq1> <fastq2> > <SAM_FILE>
-samtools view -b <SAM FILE> > <BAM FILE>
-rm <SAM FILE>
-samtools sort -@<NUM_THREADS> -o <OUT_FILE> <INFILE>
-samtools index <INFILE>
-hypo programma per polishing ma bisogna avere il mapping 
-mapping= ?? corrispondenza di read e ? 
-sem = bam ma versione binaria 
-possiamo inpacchetare tutti questi 5 commandi in un skript cosi diventa automatico, lancabile automaticamente dal computer
-
-creaiamo un file: nano mapping.sh   sh= skript bash 
-poi incollare tutti i 5 commandi
-shibang= parte dello skrip di linguaggio di programmazione 
-#commento -> non verà lanciata! #!/bin/bash -> lo skript è in linguaggio bash 
-poi scriviamo cosa fa questo skrip che tutto lo capiscono 
- Mapping short and long reads on assembly 
-# Mapping short and long reads on assembly
-
-output di un file dentro un commando 
--o ridirezionare output di un file dentro in un file ??(non so se sia giusto) 
-
-> riposizionato in un file, e crea anche il file nuovo con dentro cio che abbiamo detto di mettere, e il contentuto verrà sovrascritto con due >> (maggiori) appendo senconda riga, lascio quello che era già nel file, e aggiungo altre righe di commando
-
-
-cat, less, nano (text editor) -> importanti per leggere e modificare un file 
-
-Commando finale: 
-
-#!/bin/bash
-
-# Mapping short and long reads on assembly
-
-# Mapping short and long reads on assembly
-minimap2 -ax <PRESET_Options> --MD -t <cores_number> <target.fa> <fastq1> <fastq2> > <SAM_FILE>
-
-# conversion SAM into BAM
-samtools view -b <SAM FILE> > <BAM FILE>
-rm <SAM FILE>
-
-# sorting and indexing of BAM file
-samtools sort -@<NUM_THREADS> -o <OUT_FILE> <INFILE>
-samtools index <INFILE>
-
-skript dovrebbe essere piu generale possibile 
-non uttilizzare gli imput, non puttiamo i file nostri 
-variabile = placeholder 
-variabile =$ 
-variabile importante che siano chiare sempre in """
-
-minimap2 -ax sr = short reads 
-#!/bin/bash
-
-# Mapping short and long reads on assembly
-
-"$CPU"=$1
-"$INPUT"=$2
-"$SR_1"=$3
-"$SR_2"=$4
-"$PREFIX"=$5
-
-
-
-
-# Mapping short and long reads on assembly
-minimap2 -ax sr --MD -t "$CPU" "$INPUT" "$SR_1" "$SR_2" > "$PREFIX".sam
-
-# conversion SAM into BAM
-samtools view -b "$PREFIX".sam "$PREFIX".bam
-rm "$PREFIX".sam
-
-# sorting and indexing of BAM file
-samtools sort -@"$CPU" -o "$PREFIX" sorted.bam "$PREFIX".bam
-samtools index "$PREFIX"_sorted.bam
-cotrol s speichern 
-control x esci 
-
-cat mapping.sh -> fa vedere il file 
-
-ln -s ../00_assembly_raw/Anoste_raw.fasta . -> crea Anoste_raw.fasta in cyano (?) 
-ln -s ../../02_KmerBased_GenomeSurvery/SRR11672503_1_paired.fastq .
-ln -s ../../02_KmerBased_GenomeSurvery/SRR11672503_2_paired.fastq .
-ln -s crea il link per poi utilizzare i file nel skript 
-
-
-
+# Activate assembly environment
 conda activate assembly
 
-come si lancia lo skript? 
-bash mapping.sh 8 Anoste_raw.fasta SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq Anoste_pol
-skript finito, ma qualcosa non va vediamo domani
+# Step 1: Assemble long reads into contig layouts
+wtdbg2 -x rs -g 227m -t 8 -i SRR11672506.fastq.gz -fo Anoste_raw
+
+# Step 2: Generate the consensus FASTA sequence from the layout file
+wtpoa-cns -t 8 -i Anoste_raw.ctg.lay.gz -fo Anoste_raw.fasta
+```
+Parameter Breakdown (wtdbg2 & wtpoa-cns)
+-x rs: Sequencing technology preset (PacBio RSII / long reads).
+-g 227m: Expected haploid genome size (~227 Mbp, estimated in the k-mer survey).
+-t 8: Number of CPU threads.
+-i: Input file (SRR11672506.fastq.gz for wtdbg2; the generated .ctg.lay.gz layout file for wtpoa-cns).
+-fo: Output prefix / output FASTA file (Anoste_raw.fasta).
+
+(Note: Since I missed the 19/10 lession, I copied the pre-assembled Anoste_raw.fasta file to continue with the downstream steps).
+
+### Copy the Raw Assembly File
+Copy the pre-assembled `Anoste_raw.fasta` file from a classmate's directory into the working folder:
+
+```bash
+cp /home/STUDENTI/virginia.piccinotti/Anoste_raw.fasta ~/Lab_Gen_Comparata/03_GenomeAssembly/00_assembly_raw/
+```
+
+### 2. Initial Quality Check (BUSCO)
+We evaluate the completeness of the raw assembly by searching for conserved single-copy orthologs using **BUSCO**. We used two lineage databases in class (`diptera_odb12` and `culicidae_odb12`); I used `diptera_odb12` (which covers a broader taxonomic group across all flies/mosquitoes).
+
+```bash
+# Activate the Conda environment containing BUSCO
+conda activate sequence
+
+# Check command syntax if needed
+# busco --help | less
+
+# Set max threads and run BUSCO in genome mode (-m geno)
+export NUMEXPR_MAX_THREADS=80
+busco -m geno -l $BUSCO/diptera_odb12 -c 8 -o Anoste_raw -i Anoste_raw.fasta
+```
+
+Parameter Breakdown
+* -m geno: Genome mode (searches for conserved genes directly in the assembly).
+* -l $BUSCO/diptera_odb12: Lineage dataset ($BUSCO is a position of the computer (a variable) placeholder).
+* -c 8: Uses 8 CPU threads.
+* -o Anoste_raw: Output directory name.
+* -i Anoste_raw.fasta: Input raw assembly FASTA file.
+
+safe the file BUSCO: 
+git add short_summary.specific.diptera_odb12.Anoste_raw.txt
+git pull
+git commit -m "QC BUSCO on raw assembly" (-m messaggio)
+git push
+
+ 
+## 01_polishing: Map short and long reads (minimap2 + samtools in mapping.sh), calculate coverage (mosdepth), polish the assembly (hypo) and check the quality again (BUSCO & KAT).
+Long-read assemblies often contain small base-level errors (especially indels). We polish the raw assembly using **HyPo**, which combines accurate Illumina short reads with PacBio long reads.
+
+### 1. Read Mapping & Creating a Bash Script (`mapping.sh`)
+
+#### Key Concepts & Workflow
+* **Read Mapping:** Aligning sequencing reads onto the draft assembly (`Anoste_raw.fasta`) to find where each read originates on the contigs. **HyPo** needs these alignments to detect and correct base errors.
+* **SAM vs. BAM:** `minimap2` outputs alignments in **SAM** format (plain text, very large). Using `samtools`, we convert it into **BAM** format (compressed binary, saves disk space), delete the raw `.sam` file, and then **sort** and **index** (`.bai`) the BAM file for fast access.
+* **Bash Scripting (`mapping.sh`):** A `.sh` script is a text file containing a list of commands that the computer executes automatically one after another. We create it with `nano` and inspect it with `cat` or `less` (see also `00_Bash`):
+  * **Shebang (`#!/bin/bash`):** Placed at the very top of the script so the system knows to execute the commands using Bash. Lines starting with `#` are comments and are ignored.
+  * **Variables (`$1`, `$2`, ...):** Placeholders for command-line arguments (`CPU=$1`, `INPUT=$2`, etc.) so the script stays reusable for any dataset.
+  * **Output Redirection (`-o`, `>`, `>>`):** `-o` specifies an output file name; `>` writes output into a file (overwriting existing content), while `>>` appends output to the end of an existing file.
+* **Symbolic Links (`ln -s`):** Creates shortcuts to large files without duplicating them (cyan = valid link, red = broken link, pink = compressed/image file). Paths can be **relative** (`../`) or **absolute** (`/home/...`).
+
+#### Setup & Script Execution
+Create the working directory, link the required input files, and write a reusable Bash script (`mapping.sh`) to align both short and long reads against `Anoste_raw.fasta` using `minimap2` and `samtools`:
+
+```bash
+mkdir -p ~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing
+cd ~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing
+
+# Link raw assembly, short reads (relative paths), and long reads (absolute path)
+ln -s ../00_assembly_raw/Anoste_raw.fasta .
+ln -s ../../02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq .
+ln -s ../../02_KmerBased_GenomeSurvey/SRR11672503_2_paired.fastq .
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/00_reads/SRR11672506.fastq.gz .
 
 
-03/11/2026
-entrare nella screen tmux a -t mapping
-nano mapping.sh
+Create the script using `nano mapping.sh` (save with `Ctrl + s`, exit with `Ctrl + x`) and verify its content with `cat mapping.sh`, `head mapping.sh`, or `less mapping.sh`:
 
-# aggiungiamo anche per LONG reads e agiustiamo il commando (SERNZA $ davanti alle variabili): 
-map-pb invece di sr
-long reads soltanto in una direzione 
+```bash
 #!/bin/bash
 
-# Mapping short and long reads on assembly
-
+# Mapping short reads on assembly
 CPU=$1
 INPUT=$2
 SR_1=$3
 SR_2=$4
 PREFIX=$5
-LR=$6
+
+# Mapping short reads with minimap2 (-ax sr: short reads)
+minimap2 -ax sr --MD -t "$CPU" "$INPUT" "$SR_1" "$SR_2" > "$PREFIX".sam
+
+# Conversion SAM into BAM
+samtools view -b "$PREFIX".sam > "$PREFIX".bam
+rm "$PREFIX".sam
+
+# Sorting and indexing of BAM file
+samtools sort -@"$CPU" -o "$PREFIX"_sorted.bam "$PREFIX".bam
+samtools index "$PREFIX"_sorted.bam
 
 
-# Mapping SHORT reads
-minimap2 -ax sr --MD -t "$CPU" "$INPUT" "$SR_1" "$SR_2" > "$PREFIX"_sr.sam
-
-# conversion SAM into BAM
-samtools view -b "$PREFIX"_sr.sam "$PREFIX"_sr.bam
-rm "$PREFIX"_sr.sam
-
-# sorting and indexing of BAM file
-samtools sort -@"$CPU" -o "$PREFIX"_sr_sorted.bam "$PREFIX"_sr.bam
-samtools index "$PREFIX"_sr_sorted.bam
-
-
-
-# Mapping LONG reads
+# Mapping LONG reads (-ax map-pb: long read in one direction)
 minimap2 -ax map-pb --MD -t "$CPU" "$INPUT" "$LR" > "$PREFIX"_lr.sam
 
 # conversion SAM into BAM
@@ -181,86 +128,80 @@ rm "$PREFIX"_lr.sam
 # sorting and indexing of BAM file
 samtools sort -@"$CPU" -o "$PREFIX"_lr_sorted.bam "$PREFIX"_lr.bam
 samtools index "$PREFIX"_lr_sorted.bam
-control S -> salvare 
-control x -> uscire 
+```
 
-../ -> per path relativi 
-senza puntini -> path assoluto (ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/00_reads/SRR11672506.fastq.gz .)
-SRR11672506.fastq.gz -> abbiamo aggiunto un link (cyano), grigio (file), rosso (rotto o ?), rosa (immagine) 
+Activate the assembly environment and run the script inside the tmux session: 
 
-less mapping.sh (entra nel file) 
-cat mapping.sh (scrive nella screen il testo del file)
-head mapping.sh (prime 10 righe del file) 
-
+```bash
+conda activate assembly
 bash mapping.sh 8 Anoste_raw.fasta SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq Anoste_pol SRR11672506.fastq.gz
-control + a poi C -> fare una nuova screen 
-control + a p -> previous
-control + a n -> next
-control + a x -> cancellare
-
-salvare il file di busco: 
-git add short_summary.specific.diptera_odb12.Anoste_raw.txt
-git pull
-git commit -m "QC BUSCO on raw assembly" (-m messaggio)
-git push
- 
-
-vedi su 05 tutto scritto: 
-risultato dobbiamo fare un GENOME REPORT
-per esame 4/5 genomi di ditteri
-5/6 specie, immaginarvi ricerca biologica (trasmissione malattie, resistenza ambientale/patogeni ecc.) 
-1-2 paper leggere su quale specie vogliamo lavorare
-cercare e scaricarle le informazioni 
--> database 
-NCBI Datasets  -> genome (richerca) -> diptera filtare i risultati -> genoma annotato (annotated genomes) -> qui possiamo scegliere tutto 
-poi giocate cun po con i filtri 
-
-dobbiamo creare una tabella con informazioni 
-scarichiamo il proteoma = genoma annotato 
-deve avere: prima colonna: separato da tabulazione -> session number 
-seconda colonna nome completo con underscore il spazio non esiste (genbank o Refseq)
-terza: codice a 6 lettere 3 lettere del genere 3 della specie e solo la prima lettere è maiuscola 
-
-caratteristiche di assembly sono importante e sottolinieate, report comparativo 
-comparare con altre specie 
-grandezza genoma, contenuto ripetitivo 
-COMPARARE 
-file in quale siamo interessati .fna.gz .gff.gz (contiene la annotazione) + inofrmazioni delle proteine
+```
 
 
-il commando non è andato a buon fine perché non c'era abbastanza spazio per salvare. 
-BAM and BAI I mapping
-abbiamo fatto i link dei file completi: 
-ln -s con tutti questi path: 
-/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/01_polishing/Anoste_raw_pb_sorted.bam     
-/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/01_polishing/Anoste_raw_pb_sorted.bam.bai 
-/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/01_polishing/Anoste_raw_sr_sorted.bam     
-/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/01_polishing/Anoste_raw_sr_sorted.bam.bai
- . 
+ok fino qua tutto fattto poi unvollständig... 
 
- e anche per questo: raw assembly Mirko
-/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/00_assembly_raw/Anoste_raw.fasta .
 
-dopo questo: 
 
-hypo -d <DRAFT_Contigs> -r @<READS_PATH> -s <APPROXIMATE_GENOMESIZE> -c <SHORT_READSCOVERAGE> -b <SORTED_BAM_SR> -B <SORTED_BAM_PB> -t <NUMBER_THREADS>
+### 2. Linking Pre-computed BAM Files & Calculating Coverage (`mosdepth`)
 
-ci manca però SHORT_READSCOVERAGE
-che otterremmo con 
-compito: capire come funziona questo commando: 
-mosdepth -n --fast-mode --by 500 <...>
-possiamo utilizzare IA e soprattutto guardare nel help o nel manuale
+#### Disk Space Issue & Symbolic Links
+Because running the mapping script for all reads failed due to insufficient space on the server, we linked the pre-computed sorted `.bam` and `.bai` files (along with Mirko's raw assembly) directly from the practice folder to proceed with polishing:
 
+```bash
+# Link pre-computed sorted BAM and BAI files
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/01_polishing/Anoste_raw_pb_sorted.bam .
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/01_polishing/Anoste_raw_pb_sorted.bam.bai .
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/01_polishing/Anoste_raw_sr_sorted.bam .
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/01_polishing/Anoste_raw_sr_sorted.bam.bai .
+
+# Link raw assembly
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/00_assembly_raw/Anoste_raw.fasta .
+```
+#### Calculating Short-Read Coverage with mosdepth
+Before running hypo polishing, we need the average short-read coverage (-c). We compute coverage in 500 bp windows using mosdepth and calculate the mean using awk:
+
+# Calculate coverage in 500 bp windows
+```bash
 mosdepth -n --fast-mode --by 500 Anoste_PB Anoste_raw_pb_sorted.bam
 mosdepth -n --fast-mode --by 500 Anoste_SR Anoste_raw_sr_sorted.bam
+```
+# Parameter & Tool Breakdown (mosdepth)
+*-n: Skips generating the coverage file for every single base (saves disk space and time).
+*--fast-mode: Speeds up calculation by semplifing the calculation of coverage.
+*--by 500: Divides the genome into windows of 500 bp and calculates the average coverage per window.
 
- -n: Non genera un file contenente la coverage di ogni singola base.
-- --fast-mode: Rende il calcolo più veloce, semplificando il calcolo della coverage.
-- --by 500: Divide il genoma in finestre di 500 bp e calcola la coverage media per ciascuna finestra.
+zcat + awk: Unzips the regions bed file (zcat), sums up the coverage values of column 4 (sum += $4), counts the lines (count++), and calculates the final average (sum / count).
 
-la soluzione: mosdepth -n --fast-mode --by 500 Anoste_raw_[pb|sr] <sorted_bam>
-zcat Anoste_raw_[pb|sr].regions.bed.gz | awk '{sum += $4;count++} END {print sum / count}' > <OUTFILE_coverage>
+# Compute the mean coverage across all windows
+zcat Anoste_SR.regions.bed.gz | awk '{sum += $4; count++} END {print sum / count}' > Anoste_SR_coverage.txt
+zcat Anoste_PB.regions.bed.gz | awk '{sum += $4; count++} END {print sum / count}' > Anoste_PB_coverage.txt
 
+### 3. Polish the Assembly (`hypo`)
+
+Now that we have the alignments (`.bam`), the calculated coverage, and the draft assembly, we can run **hypo** (Hybrid Polishing) to correct base-level errors and indels.
+
+First, we create a text file (`reads.txt`) listing the paths to the paired short reads (using `echo -e` with `\n` for newlines):
+
+```bash
+R1="/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq"
+R2="/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_2_paired.fastq"
+echo -e "$R1\n$R2" > reads.txt
+
+# Then we run HyPo and rename the output file:
+
+hypo -d Anoste_raw.fasta -r @reads.txt -s 227054799 -c 136 -b Anoste_raw_sr_sorted.bam -B Anoste_raw_pb_sorted.bam -t 8
+```
+# Rename output file for clarity
+mv hypo_Anoste_raw.fasta Anoste_pol.fasta
+
+Parameter Breakdown (HyPo)
+-d: Draft assembly FASTA file (Anoste_raw.fasta).
+-r @reads.txt: Path file listing the paired short-read FASTQ files (preceded by @).
+-s 227054799: Approximate haploid genome size (~227.05 Mbp from the GenomeScope survey).
+-c 136: Mean short-read coverage calculated via mosdepth (136.412).
+-b: Sorted BAM file for short reads.
+-B: Sorted BAM file for PacBio long reads.
+-t 8: Number of CPU threads.
 
 
 (assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$ zcat Anoste_SR.regions.bed.gz | awk '{sum += $4;count++} END {print sum / count}' > Anoste_SR_coverage.txt
@@ -345,6 +286,9 @@ ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_Genom
 kat comp -t <NUM_THREADS> -o <OUTPUT_PREFIX> '<FASTQ>...' <ASSEMBLY>
 kat comp -t 9 -o Anoste_pol_kat 'SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq' Anoste_pol.fasta
  
+
+## 02_contaminants: Find contaminants (BlobTools) and remove non-Arthropoda contigs using grep and awk.
+
 genome assembly 02
 identificare le contaminazioni e eliminarle
 re mapping -> vedi script del mapping
@@ -468,6 +412,7 @@ Dependencies and versions:
         miniprot_align: 0.18-r281
 -> creare una tabellina con miglioramenti 
 
+## 03_scaffolding: Build chromosome-level scaffolds using a reference genome (RagTag).
 
 comandi importanti, sapera la sintasse base
 perché e anche deve fare le cose corretti. e controllare le cose se sono giuste
@@ -542,13 +487,3 @@ ragtag.py correct -t 10 <REFERENCE_GENOME> <DRAFT_GENOME> (t=quanti CPU possiamo
 ragtag.py correct -t 10 GCF_013141755.1_UCI_ANSTEP_V1.0_genomic.fna Anoste_pol_nocont.fa
 ragtag.py scaffold -C -t 20 -o <OUTPUT_DIR> <REFERENCE_GENOME> <CORRECTED_DRAFTGENOME>
 ragtag.py scaffold -C -t 10 -o Anoste_chr GCF_013141755.1_UCI_ANSTEP_V1.0_genomic.fna ragtag_output/ragtag.correct.fasta
-
-
-
-
-
- 
-
-
-
-
