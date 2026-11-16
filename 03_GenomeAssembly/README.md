@@ -203,7 +203,7 @@ git add short_summary.specific.diptera_odb12.Anoste_raw.txt
 git pull
 git commit -m "QC BUSCO on raw assembly" (-m messaggio)
 git push
-
+ 
 
 vedi su 05 tutto scritto: 
 risultato dobbiamo fare un GENOME REPORT
@@ -483,9 +483,71 @@ anche -c (la stessa cosa con la pipe (|wc -l)
 awk
 sed cerca e sostituisci
 
+:~/Lab_Gen_Comparata/03_GenomeAssembly/02_contaminants$ ls
+ Anoste_blob.blobDB.json (è uscito questo file) 
+
+blobtools view -i Anoste_blob.blobDB.json -o Anoste
+blobtools plot -i Anoste_blob.blobDB.json -o Anoste
+(2 file .png e due file .txt)
+ salvarli (git add, git pull, git commit, git push) 
+
+ You can download and inspect .png files directly. A common way to observe the table file, instead, is:
 
 
 
+
+awk '{ if ((NR>1)&&($0~/^>/)) { printf("\n%s", $0); } else if (NR==1) { printf("%s", $0); } else { printf("\t%s", $0); } }' in.fa | grep -w -v -Ff patterns.txt - | tr "\t" "\n" > out.fa
+#The first part ensures the FASTA is in one-line form and reformats the file, obtaining">header\tsequence". This makes it easier to process the file with grep. Then it filters out everything in the patterns file, outputting a one-line FASTA file with only the desired contigs.
+
+ trasforma un fasta la struttura header fasta viene persa. la struttura diventa una nuova tabella. ci è utile grep funziona a righe e non a colonne
+ -> passaggio intermedio per utilizzare grep
+
+ With:
+
+-w #ensures it matches the exact name
+-v #invert the recognised pattern
+-Ff #compares directly to file
+'-' #use stdin as input from the previous command (placeholder)
+To use it, we need to create a file listing all contaminated contigs. To do so, we need to decide which parameters to use to filter our blobDB_table.
+
+tr = trasformazione \t \n ->nuova line e ??? bohh
+
+creaiamo il file pattern prima: 
+uttilizzando grep 
+
+grep -v '^#' Anoste_blobDB_table.txt | head
+togliere header
+trovare tutti i contings che non sono artropoda:
+grep -v '^#' Anoste.Anoste_blob.blobDB.table.txt | awk '$6 != "Arthropoda"' | head
+grep -v '^#' Anoste.Anoste_blob.blobDB.table.txt | awk '$6 != "Arthropoda" {print $1}' | head
+grep -v '^#' Anoste.Anoste_blob.blobDB.table.txt | awk '$6 != "Arthropoda" {print $1}' > contaminants_contings.txt
+
+
+adesso usiamo il awk: 
+awk '{ if ((NR>1)&&($0~/^>/)) { printf("\n%s", $0); } else if (NR==1) { printf("%s", $0); } else { printf("\t%s", $0); } }' in.fa | grep -w -v -Ff patterns.txt - | tr "\t" "\n" > out.fa
+
+awk '{ if ((NR>1)&&($0~/^>/)) { printf("\n%s", $0); } else if (NR==1) { printf("%s", $0); } else { printf("\t%s", $0); } }' Anoste_pol.fasta | grep -w -v -Ff contaminants_contings.txt - | tr "\t" "\n" > Anoste_pol_nocont.fa
+
+abbiamo creato il nostro assembly senza contaminazioni
+
+Reference-based scaffolding:
+ultimo comando per completare il assembly: 
+mkdir 03_scaffolding
+ln -s ../02_contaminants/Anoste_pol_nocont.fa
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/01_Anoste_reference/GCF_013141755.1_UCI_ANSTEP_V1.0_genomic.fna . 
+-> da ncbi (con assession (??) number 013141755)
+
+conda activate assembly
+ragtag.py correct -t 10 <REFERENCE_GENOME> <DRAFT_GENOME> (t=quanti CPU possiamo uttilizzare)
+ragtag.py correct -t 10 GCF_013141755.1_UCI_ANSTEP_V1.0_genomic.fna Anoste_pol_nocont.fa
+ragtag.py scaffold -C -t 20 -o <OUTPUT_DIR> <REFERENCE_GENOME> <CORRECTED_DRAFTGENOME>
+ragtag.py scaffold -C -t 10 -o Anoste_chr GCF_013141755.1_UCI_ANSTEP_V1.0_genomic.fna ragtag_output/ragtag.correct.fasta
+
+
+
+
+
+ 
 
 
 
