@@ -1,0 +1,10 @@
+## 1.1.1
+## bam0=/home/STUDENTI/marta.verant/Lab_Gen_Comparata/03_GenomeAssembly/02_contaminants/Anoste_pol_sorted.bam
+# name	colour	count_visible	count_visible_perc	span_visible	span_visible_perc	n50	gc_mean	gc_std	bam0_mean	bam0_std	bam0_read_map	bam0_read_map_p
+all	None	849	100.0%	224,753,923	100.0%	20,402,430	0.42	0.093	272.1	758.7	207,848,289	98.4%
+Arthropoda	#1f77b4	621	100.0%	215,545,609	100.0%	24,424,754	0.43	0.061	319.5	850.3	192,912,830	91.4%
+Pseudomonadota	#ff7f0e	82	100.0%	7,212,037	100.0%	5,396,928	0.58	0.044	16.0	42.9	12,373,290	5.9%
+no-hit	#d3d3d3	117	100.0%	1,441,006	100.0%	19,600	0.3	0.085	263.8	512.7	2,505,775	1.2%
+Bacteroidota	#d62728	26	100.0%	472,389	100.0%	20,756	0.35	0.023	5.7	1.1	18,182	0.0%
+unresolved	#9467bd	1	100.0%	47,338	100.0%	47,338	0.46	0.0	0.1	0.0	16	0.0%
+Uroviricota	#e377c2	2	100.0%	35,544	100.0%	22,389	0.58	0.0031	155.9	11.4	38,196	0.0%
