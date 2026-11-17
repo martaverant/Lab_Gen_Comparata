@@ -64,8 +64,7 @@ git clone git@github.com:martaverant/Lab_Gen_Comparata.git
 | `git add <file>` | Prepares modified files to be saved (stages changes) |
 | `git commit -m "message"` | Saves staged changes locally with a descriptive note |
 | `git pull` | Downloads and merges the latest changes from GitHub to your server |
-| `git push origin main` | Sends your saved local commits to GitHub |
-
+| `git push` | Sends your saved local commits to GitHub |
 
 ---
 
