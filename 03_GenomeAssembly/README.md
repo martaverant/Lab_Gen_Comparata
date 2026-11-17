@@ -286,6 +286,7 @@ ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_Genom
 kat comp -t <NUM_THREADS> -o <OUTPUT_PREFIX> '<FASTQ>...' <ASSEMBLY>
 kat comp -t 9 -o Anoste_pol_kat 'SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq' Anoste_pol.fasta
  
+Anoste_pol_kat-main.mx.spectra-cn.png (inserire l'immagine kat) 
 
 ## 02_contaminants: Find contaminants (BlobTools) and remove non-Arthropoda contigs using grep and awk.
 
