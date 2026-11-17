@@ -47,6 +47,7 @@ grep ">" input.fasta | wc -l > sequence_count.txt
 * grep (Search for text patterns):
  * grep ">" genome.fasta        #Find all FASTA header lines
  * grep -c ">" genome.fasta     #Count how many FASTA header lines exist.
+ * grep -v
 * Awk (Column extraction and processing):
  * awk '{print \$1}' table.tsv    #Print only the first column of a table.
 * Sed (Search and replace text):
