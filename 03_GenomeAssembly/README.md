@@ -488,3 +488,29 @@ ragtag.py correct -t 10 <REFERENCE_GENOME> <DRAFT_GENOME> (t=quanti CPU possiamo
 ragtag.py correct -t 10 GCF_013141755.1_UCI_ANSTEP_V1.0_genomic.fna Anoste_pol_nocont.fa
 ragtag.py scaffold -C -t 20 -o <OUTPUT_DIR> <REFERENCE_GENOME> <CORRECTED_DRAFTGENOME>
 ragtag.py scaffold -C -t 10 -o Anoste_chr GCF_013141755.1_UCI_ANSTEP_V1.0_genomic.fna ragtag_output/ragtag.correct.fasta
+
+we do a control of quality: 
+
+grep ">" Anoste_chr/ragtag.scaffold.fasta | head
+nano chromocomes.txt (file of pattern)
+>NC_050201.1_RagTag
+>NC_050202.1_RagTag
+>NC_050203.1_RagTag
+
+we use only that 3 because of interest (these are the true chromosomes)
+
+grep -A1 -Ff Anoste_chr/chromocomes.txt Anoste_chr/ragtag.scaffold.fasta > Anoste_chr.fasta
+
+è molto poco heterozigosi, 80% è homozigosi (vedi kat, anche quello è un controllo di qualità)
+
+martedi si inizia a lavorare a conto suo ognun olavora in autonomia sui propri dati, fare la tabella!! come spiegato!!
+formato e output ecc. non sono suggerimenti, sono obbligatori 
+tabellina per settimana prossima per martedi !! IMPORTANTE
+
+->>> dovete lanciare il busco su livello scaffold 
+lanciate busco su Anoste chromosome level 
+busco sicoramente su tutti i livelli 
+anche sul decontaminato 
+4 -> busco (raw, polish, decontaminato, scaffold) 
+
+
