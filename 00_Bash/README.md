@@ -9,14 +9,15 @@ This document contains basic Bash commands and notes for the *Laboratorio di Gen
 | Command | Description | Example |
 | :--- | :--- | :--- |
 | `pwd` | Show your current folder (working directory) | `pwd` |
-| `ls -lh` | List files with easy-to-read file sizess | `ls -lh` |
-| `cd <dir>` | Change directory | `cd ~/Lab_Gen_Comparata` |
-| `mkdir -p <dir>` | Create directory (and subdirectories) | `mkdir -p project/{data,scripts}` |
+| `ls` | List files with easy-to-read file sizess | `ls -lh` |
+| `cd <dir>` | Change directory | `cd ~/Lab_Gen_Comparata` (cd ../ #go back one folder)| 
+| `mkdir <dir>` | Create directory (and subdirectories) | `mkdir -p project/{data,scripts}` |
 | `cp <src> <dst>` | Copy a file or directory (`-r` for directories) | `cp file.txt backup/` |
 | `mv <src> <dst>` | Move or rename a file | `mv old.txt new.txt` |
-| `rm <file>` | Delete a file | `rm temp.txt` |
+| `rm <file>` | Delete a file | `rm temp.txt` | (be caution with rm!!) 
 | `rm -r <dir>` | Delete a folder and everything inside it | `rm -r old_folder/` |
 
+../../ -> move through the folders
 ---
 
 ## 2. Reading & Inspecting Files
@@ -36,30 +37,30 @@ This document contains basic Bash commands and notes for the *Laboratorio di Gen
 
 * `>`  : Save output to a file (overwrites existing text).
 * `>>` : Add output to the end of an existing file without deleting its contents.
-* `2>` : Save error messages to a file.
 * `|` (Pipe) : Pass the output of one command as input into another command.
 
 **Example: Count how many sequences are in a FASTA file and save the total to a text file::**
 ```bash
-grep "^>" input.fasta | wc -l > sequence_count.txt
+grep ">" input.fasta | wc -l > sequence_count.txt
 ```
 
 ## 4. Text Processing Tools
-* Grep (Search for text patterns):
- * grep "^>" genome.fasta        # Find all FASTA header lines
- * grep -c "^>" genome.fasta     # Count how many FASTA header lines exist.
+* grep (Search for text patterns):
+ * grep ">" genome.fasta        #Find all FASTA header lines
+ * grep -c ">" genome.fasta     #Count how many FASTA header lines exist.
+ * grep -v
 * Awk (Column extraction and processing):
- * awk '{print \$1}' table.tsv    # Print only the first column of a table.
+ * awk '{print \$1}' table.tsv    #Print only the first column of a table.
 * Sed (Search and replace text):
- * sed 's/old/new/g' file.txt   # Replace every occurrence of "old" with "new".
+ * sed 's/old/new/g' file.txt   #Replace every occurrence of "old" with "new".
 
 ---
 
 ## 5. File Permissions & Running Scripts
 Change permissions to make a script executable and run it:
 
-* chmod +x script.sh    # Make script executable
-* ./script.sh           # Execute script
+* chmod +x script.sh    #Make script executable
+* ./script.sh           #Execute script
 
 ## 6. Essential Keyboard Shortcuts
 `Tab` (Auto-completion):  
@@ -79,3 +80,4 @@ Stops and cancels a running command immediately.
 
 `Ctrl + l` or `clear` (Clear screen):  
 Clears the terminal window to keep your workspace clean.
+

@@ -1,31 +1,34 @@
 # 02_KmerBased_GenomeSurvey
 
-This module covers short-read data setup, quality control of raw Illumina paired-end sequencing reads (*Anopheles stephensi*), read trimming with Trimmomatic, and k-mer distribution analysis using KAT and GenomeScope 2.0.
+- short-read data setup
+- quality control of raw Illumina paired-end sequencing reads (*Anopheles stephensi*)
+- read trimming with Trimmomatic
+- k-mer distribution analysis using KAT and GenomeScope 2.0.
 
----
 
-## 1. Data Access & Symbolic Links (`ln -s`)
+## 1. Data Access & Links (`ln -s`)
 
 Instead of downloading the raw sequencing reads from the internet, we used the pre-downloaded files provided on the university server.
 
-Raw FASTQ files are large (several gigabytes). To save disk space, we created shortcuts (symbolic links) to the shared data directory instead of copying the actual files:
+Raw FASTQ files are large (several gigabytes). To save disk space, we created shortcuts (links) to the shared data directory instead of copying the actual files:
 
 ```bash
-# Create symbolic links to raw paired-end reads
+# Create links to raw paired-end reads
 ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/00_reads/SRR11672503_1.fastq.gz .
 ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/00_reads/SRR11672503_2.fastq.gz .
 ```
 
----
 
-## 2. Quality Control on Raw Reads (FastQC & MultiQC)
+## 2. Quality Control on Raw Reads (FastQC)
 
-Before performing downstream analyses, we evaluate base quality, adapter contamination, and duplication levels across raw sequencing reads.
+Before trimming or assembling, we evaluate base quality, adapter contamination, and duplication levels across raw sequencing reads using **FastQC**.
 
-### FastQC Reports
-We copy pre-computed FastQC HTML reports from the shared directory and track them with Git:
+*(Note: To save server time during class, we skipped running `fastqc` ourselves and copied the pre-computed HTML reports from the shared directory, then inspected them in the browser).*
 
 ```bash
+# Command that would normally be run:
+# fastqc SRR11672503_1.fastq.gz SRR11672503_2.fastq.gz
+
 # Copy pre-computed FastQC outputs from the shared directory
 cp /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_fastqc.html .
 cp /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_fastqc.zip .
@@ -35,10 +38,9 @@ cp /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSu
 # Track and commit FastQC HTML reports in Git
 git add SRR11672503_1_fastqc.html SRR11672503_2_fastqc.html
 git commit -m "QC on raw reads"
-git push origin main
+git push
 ```
 
----
 
 ## 3. Read Trimming (Trimmomatic)
 
@@ -68,22 +70,16 @@ trimmomatic PE -threads 8 -phred33 \
 - `SLIDINGWINDOW:4:15`: Trims the read when average Phred quality drops below 15 across a 4-bp window.
 - `MINLEN:36`: Discards reads shorter than 36 bp after trimming.
 
-Trimming Log Results (`stats_trimmomatic.log`)
 
-
----
-
-## 4. Post-Trimming Quality Control (Note)
+## 4. Post-Trimming Quality Control
 
 Note: In standard bioinformatics pipelines, you re-run FastQC on trimmed reads to verify quality improvement. In our practice session, we skipped running FastQC ourselves and instead reviewed the pre-computed reports provided by the professor (1_paired_fastqc).
-
-Observations: Read quality increased significantly after trimming, and most surviving reads remained at ~150 bp length.
 
 ```bash
 fastqc SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq
 ```
+Observations: Read quality increased significantly after trimming, and most surviving reads remained at ~150 bp length.
 
----
 
 ## 5. K-mer Analysis (KAT & GenomeScope 2.0)
 
@@ -102,9 +98,8 @@ kat hist -t 8 -m 27 -o anoste_27 SRR11672503_1_paired.fastq SRR11672503_2_paired
 - `-o anoste_27`: Output file prefix.
 - Inputs: `SRR11672503_1_paired.fastq` and `SRR11672503_2_paired.fastq`.
 - Generated Output Files: Running `kat hist` automatically creates two output files:
-
- - `anoste_27.png`: A visual plot/graph of the k-mer spectrum for quick inspection.
- - `anoste_27`: The raw text data file containing numerical k-mer counts.
+  - `anoste_27.png`: A visual plot/graph of the k-mer spectrum for quick inspection.
+  - `anoste_27`: The raw text data file containing numerical k-mer counts.
 
 ### Saving and Pushing KAT Outputs  
 Rename the output histogram file and commit it to GitHub:
@@ -118,13 +113,13 @@ git commit -m "Add KAT k-mer hist27 output"
 git push
 ```
 
+![27-mer spectrum](anoste_27.png)
 
+- Main peak (~96x k-mer coverage): Homozygous genome peak.
+- Small shoulder (~48x): Low heterozygosity.
 
 ### GenomeScope 2.0 Profiling Steps
 1. Open the resulting `anoste_27.hist` histogram file and remove any comment lines at the beginning.
 2. Upload the cleaned histogram file to [GenomeScope 2.0](http://qb.cshl.edu/genomescope/genomescope2.0/).
 3. View pre-computed analysis results at http://genomescope.org/analysis.php?code=97ab6nlVpU3H5hDzfqAy.
-4.
-
-
-
+4. **Result:** Estimated haploid genome size is **~227.05 Mbp** (used later as -s 227054799 for polishing with HyPo).
