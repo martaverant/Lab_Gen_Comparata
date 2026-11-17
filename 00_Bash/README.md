@@ -46,20 +46,20 @@ grep "^>" input.fasta | wc -l > sequence_count.txt
 
 ## 4. Text Processing Tools
 * Grep (Search for text patterns):
- * grep "^>" genome.fasta        # Find all FASTA header lines
- * grep -c "^>" genome.fasta     # Count how many FASTA header lines exist.
+ * grep "^>" genome.fasta        #Find all FASTA header lines
+ * grep -c "^>" genome.fasta     #Count how many FASTA header lines exist.
 * Awk (Column extraction and processing):
- * awk '{print \$1}' table.tsv    # Print only the first column of a table.
+ * awk '{print \$1}' table.tsv    #Print only the first column of a table.
 * Sed (Search and replace text):
- * sed 's/old/new/g' file.txt   # Replace every occurrence of "old" with "new".
+ * sed 's/old/new/g' file.txt   #Replace every occurrence of "old" with "new".
 
 ---
 
 ## 5. File Permissions & Running Scripts
 Change permissions to make a script executable and run it:
 
-* chmod +x script.sh    # Make script executable
-* ./script.sh           # Execute script
+* chmod +x script.sh    #Make script executable
+* ./script.sh           #Execute script
 
 ## 6. Essential Keyboard Shortcuts
 `Tab` (Auto-completion):  
