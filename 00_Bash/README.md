@@ -1,6 +1,4 @@
 # 00_Bash: Command Line Notes
-First go to guacamole enter there with uni credentials, then install Git Bash.
-
 This document contains basic Bash commands and notes for the *Laboratorio di Genomica Comparata* course.
 
 ---
