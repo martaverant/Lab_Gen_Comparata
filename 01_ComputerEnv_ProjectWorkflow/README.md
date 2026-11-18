@@ -1,6 +1,7 @@
 # 01_ComputerEnv_ProjectWorkflow
 
 This document explains the setup of our computing environment, SSH server access, GitHub workflow, and Conda software environments for the *Laboratorio di Genomica Comparata* course.
+First go to guacamole enter there with uni credentials, then install Git Bash.
 
 ---
 
