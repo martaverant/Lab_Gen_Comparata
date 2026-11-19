@@ -27,7 +27,7 @@ Before trimming or assembling, we evaluate base quality, adapter contamination, 
 
 ```bash
 # Command that would normally be run:
-# fastqc SRR11672503_1.fastq.gz SRR11672503_2.fastq.gz
+fastqc SRR11672503_1.fastq.gz SRR11672503_2.fastq.gz
 
 # Copy pre-computed FastQC outputs from the shared directory
 cp /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_fastqc.html .
@@ -76,7 +76,8 @@ trimmomatic PE -threads 8 -phred33 \
 Note: In standard bioinformatics pipelines, you re-run FastQC on trimmed reads to verify quality improvement. In our practice session, we skipped running FastQC ourselves and instead reviewed the pre-computed reports provided by the professor (1_paired_fastqc).
 
 ```bash
-fastqc SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq
+# Command that would normally be run:
+fastqc SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq 
 ```
 Observations: Read quality increased significantly after trimming, and most surviving reads remained at ~150 bp length.
 
