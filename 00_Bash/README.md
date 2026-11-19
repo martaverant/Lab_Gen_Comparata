@@ -9,16 +9,17 @@ This document contains basic Bash commands and notes for the *Laboratorio di Gen
 | :--- | :--- | :--- |
 | `pwd` | Show your current folder (working directory) | `pwd` |
 | `ls` | List files and folders in the current directory | `ls` |
-| `cd <dir>` | Change directory (`cd` alone goes back to `~` home; `cd ..` goes one folder up) | `cd ~/Lab_Gen_Comparata` |
+| `cd <dir>` | Change directory (`cd` alone goes to `~` home; `cd ..` goes one folder up) | `cd ~/Lab_Gen_Comparata` |
 | `mkdir <dir>` | Create directory (`-p` creates nested subdirectories at once) | `mkdir -p project/{data,scripts}` |
 | `cp <src> <dst>` | Copy a file or directory (`-r` for directories; `.` means current folder) | `cp file.txt .` |
 | `mv <src> <dst>` | Move or rename a file or directory | `mv old.txt new.txt` |
+| `ln -s <target> .` | Create a symbolic link (shortcut) in the current directory (`.`) | `ln -s /abs/path/to/file.fasta .` |
 | `rm <file>` | Delete a file permanently (**use with caution!**) | `rm temp.txt` |
 | `rm -r <dir>` | Delete a folder and everything inside it | `rm -r old_folder/` |
 
-Moving through multiple folders at once (e.g., jumping up multiple levels with `../../` or chaining subfolders with `Tab` auto-completion):
+Moving through multiple folders at once (using `../../` or chaining subfolders with `Tab` auto-completion):
 ```bash
-cd ../../                        # Move up two directory levels
+cd ../../                         # Move up two directory levels
 cd Lab_Gen_Comparata/03.../00.../ # Chain folders and complete names with Tab
 ```
 
@@ -26,41 +27,42 @@ cd Lab_Gen_Comparata/03.../00.../ # Chain folders and complete names with Tab
 
 ---
 
-## 2. Reading, Inspecting & System Commands
+## 2. Reading, Inspecting & Editing Files
 
 | Command | Description | Example |
 | :--- | :--- | :--- |
-| `cat <file>` | Display full file content in standard output | `cat file.txt` |
-| `less <file>` | Open a file to scroll through interactively (press `q` to exit) | `less sequences.fastq` |
-| `head -n 10 <file>` | Show first 10 lines of a file | `head -n 10 genome.fasta` |
-| `tail -n 10 <file>` | Show last 10 lines of a file | `tail -n 10 genome.fasta` |
-| `wc -l <file>` | Count total lines in a file (`wc` alone shows lines, words, bytes) | `wc -l reads.fastq` |
-| `nano <file>` | Open a simple text editor in the terminal (`Ctrl+s` save, `Ctrl+x` exit) | `nano script.sh` |
-| `man <cmd>` / `--help` | Display manual or help options for a command | `grep --help` |
-| `df -h` / `du -sh` | Check available disk space / folder size | `du -sh *` |
+| `cat <file>` | Print the full content of a file to standard output (good for small files) | `cat stats.log` |
+| `less <file>` | Open a file for interactive scrolling (`q` to quit; `less -S` keeps long lines on a single line) | `less -S sequences.fastq` |
+| `head -n 10 <file>` | Show the first 10 lines of a file (or inspect the start of a piped stream) | `head -n 10 genome.fasta` |
+| `tail -n 10 <file>` | Show the last 10 lines of a file (or use `tail -f` to follow a growing log file) | `tail -n 10 genome.fasta` |
+| `wc -l <file>` | Count total lines in a file (`wc` alone shows lines, words, and characters) | `wc -l reads.fastq` |
+| `nano <file>` | Create or open a text/script file in the terminal to edit and save | `nano mapping.sh` |
 
 ---
 
-## 3. Redirection & Pipes
+## 3. Redirection & Pipes (`|`)
 
-- `>` : Save output to a file (overwrites existing content).
-- `>>` : Append output to the end of an existing file without deleting its contents.
-- `|` (Pipe) : Pass the standard output of one command as input into another command.
+- `>` : Redirect standard output to a file (overwrites existing content).
+- `>>` : Append standard output to the end of an existing file without deleting its contents.
+- `2>` : Redirect standard error (warnings/messages) to a file.
+- `|` (Pipe) : Pass the standard output of one command directly as the standard input of the next command—without needing an intermediate file. Only the first command in a pipe takes the original input file.
 
-**Example: Count how many sequences are in a FASTA file and save the total to a text file:**
+**Examples:**
 ```bash
-grep ">" input.fasta | wc -l > sequence_count.txt
+grep ">" input.fasta | wc -l > sequence_count.txt   # Count FASTA sequences and save total
+grep "word" file1 | sed 's/ /\t/g' | head -n 10     # Chain commands and peek at first 10 lines
 ```
 
 ---
 
-## 4. Text Processing Tools
+## 4. Text Processing Tools (`grep`, `awk`, `sed`)
 
-**`grep` (Search for text patterns):**
+**`grep` (Search for text patterns in files or streams):**
 ```bash
-grep ">" genome.fasta          # Find all FASTA header lines
-grep -c ">" genome.fasta       # Count how many FASTA header lines exist
-grep -v "^#" annotation.gff3   # Exclude comment lines starting with "#"
+grep ">" genome.fasta          # Print all lines matching ">" (e.g. FASTA headers)
+grep -c ">" genome.fasta       # Count how many lines match ">"
+grep -v "^#" annotation.gff3   # Invert match: exclude lines starting with "#"
+grep -i "pattern" file.txt     # Case-insensitive search
 ```
 
 **`awk` (Column extraction and processing):**
@@ -73,24 +75,17 @@ awk '{print $1}' table.tsv     # Print only the first column of a table
 sed 's/old/new/g' file.txt     # Replace every occurrence of "old" with "new"
 ```
 
-**`sort` & `uniq` (Sorting and counting unique entries):**
-```bash
-sort file.txt | uniq -c        # Sort lines and count unique occurrences
-```
-
 ---
 
 ## 5. File Permissions & Running Scripts
 
-A basic robust Bash script starts with a shebang (`#!/bin/bash`) and safety flags:
+Start Bash scripts (`.sh`) with a shebang (`#!/bin/bash`) and add comments (`#`) explaining what each step does:
 ```bash
 #!/bin/bash
-set -e          # Exit immediately if a command fails
-set -u          # Treat unset variables as an error
-set -o pipefail # Fail if any command in a pipe fails
+# Description: Example script for mapping reads
 ```
 
-Change permissions to make a script executable and run it:
+Make a script executable and run it:
 ```bash
 chmod +x script.sh    # Make script executable
 ./script.sh           # Execute script
