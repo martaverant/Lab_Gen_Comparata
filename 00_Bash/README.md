@@ -13,7 +13,7 @@ This document contains basic Bash commands and notes for the *Laboratorio di Gen
 | `mkdir <dir>` | Create directory (and subdirectories) | `mkdir -p project/{data,scripts}` |
 | `cp <src> <dst>` | Copy a file or directory (`-r` for directories) | `cp file.txt backup/` |
 | `mv <src> <dst>` | Move or rename a file | `mv old.txt new.txt` |
-| `rm <file>` | Delete a file | `rm temp.txt` | (be caution with rm!!) 
+| `rm <file>` | Delete a file (be caution with rm!!)  | `rm temp.txt` |
 | `rm -r <dir>` | Delete a folder and everything inside it | `rm -r old_folder/` |
 
 ../../ -> move through the folders
