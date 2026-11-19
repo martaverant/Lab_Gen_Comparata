@@ -1,9 +1,9 @@
 # 02_KmerBased_GenomeSurvey
 
-- short-read data setup
-- quality control of raw Illumina paired-end sequencing reads (*Anopheles stephensi*)
-- read trimming with Trimmomatic
-- k-mer distribution analysis using KAT and GenomeScope 2.0.
+- Short-read data setup
+- Quality control of raw Illumina paired-end sequencing reads (*Anopheles stephensi*)
+- Read trimming with Trimmomatic
+- K-mer distribution analysis using KAT and GenomeScope 2.0
 
 
 ## 1. Data Access & Links (`ln -s`)
@@ -21,7 +21,7 @@ ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/00_reads/S
 
 ## 2. Quality Control on Raw Reads (FastQC)
 
-Before trimming or assembling, we evaluate base quality, adapter contamination, and duplication levels across raw sequencing reads using **FastQC**.
+Before trimming or assembling, we evaluate base quality, adapter contamination, and duplication levels across raw sequencing reads using **FastQC**[cite: 3, 6].
 
 *(Note: To save server time during class, we skipped running `fastqc` ourselves and copied the pre-computed HTML reports from the shared directory, then inspected them in the browser).*
 
@@ -44,7 +44,7 @@ git push
 
 ## 3. Read Trimming (Trimmomatic)
 
-We remove low-quality bases and Illumina adapter sequences using a sliding-window approach in Trimmomatic.
+We remove low-quality bases and Illumina adapter sequences using a sliding-window approach in Trimmomatic. For paired-end reads, both mates belong to the same fragment—if one mate fails quality filtering, the pair is lost[cite: 3, 6].
 
 ```bash
 # Activated Conda environment: assembly
@@ -60,31 +60,31 @@ trimmomatic PE -threads 8 -phred33 \
 ```
 
 ### Key Parameter Breakdown
-- `PE`: Paired-end mode.
-- `-threads 8 -phred33`: Uses 8 CPU threads (our server uses max. 80 CPU) and Phred-33 quality encoding (max. 66).
-- Input / Output Files (requires 6 positional file arguments):
-- **2 Inputs**: `SRR11672503_1.fastq.gz` (forward) and `SRR11672503_2.fastq.gz` (reverse).
-- **4 Outputs**: `SRR11672503_1_paired.fastq`, `SRR11672503_1_unpaired.fastq`, `SRR11672503_2_paired.fastq`, and `SRR11672503_2_unpaired.fastq`.
-- `LEADING:3` / `TRAILING:3`: Cuts bases at the start or end of a read if quality is below 3.
-- `ILLUMINACLIP`: Removes TruSeq3 paired-end adapters using the specified path.
-- `SLIDINGWINDOW:4:15`: Trims the read when average Phred quality drops below 15 across a 4-bp window.
-- `MINLEN:36`: Discards reads shorter than 36 bp after trimming.
+- `PE`: Paired-end mode[cite: 3].
+- `-threads 8 -phred33`: Uses 8 CPU threads (our server uses max. 80 CPU) and Phred-33 quality encoding[cite: 3, 6].
+- Input / Output Files (requires 6 positional file arguments)[cite: 3]:
+  - **2 Inputs**: `SRR11672503_1.fastq.gz` (forward) and `SRR11672503_2.fastq.gz` (reverse)[cite: 3, 6].
+  - **4 Outputs**: `SRR11672503_1_paired.fastq`, `SRR11672503_1_unpaired.fastq`, `SRR11672503_2_paired.fastq`, and `SRR11672503_2_unpaired.fastq`[cite: 3].
+- `LEADING:3` / `TRAILING:3`: Cuts bases at the start or end of a read if quality is below 3[cite: 3].
+- `ILLUMINACLIP`: Removes TruSeq3 paired-end adapters using the specified path[cite: 3].
+- `SLIDINGWINDOW:4:15`: Trims the read when average Phred quality drops below 15 across a 4-bp window[cite: 3, 6].
+- `MINLEN:36`: Discards reads shorter than 36 bp after trimming[cite: 3].
 
 
 ## 4. Post-Trimming Quality Control
 
-Note: In standard bioinformatics pipelines, you re-run FastQC on trimmed reads to verify quality improvement. In our practice session, we skipped running FastQC ourselves and instead reviewed the pre-computed reports provided by the professor (1_paired_fastqc).
+Note: In standard bioinformatics pipelines, you re-run FastQC on trimmed reads to verify quality improvement[cite: 5, 6]. In our practice session, we skipped running FastQC ourselves and instead reviewed the pre-computed reports provided by the professor (`1_paired_fastqc`).
 
 ```bash
 # Command that would normally be run:
-fastqc SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq 
+fastqc SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq
 ```
-Observations: Read quality increased significantly after trimming, and most surviving reads remained at ~150 bp length.
+Observations: Read quality increased significantly after trimming, and most surviving reads remained at ~150 bp length[cite: 6].
 
 
 ## 5. K-mer Analysis (KAT & GenomeScope 2.0)
 
-K-mer counting breaks sequencing reads into short substrings of length *k*. We analyze k-mer frequency to estimate genome size, heterozygosity, and repetition before genome assembly.
+K-mer counting breaks sequencing reads into short substrings of length *k* (a mathematical concept to estimate genome size, repeat content, and heterozygosity) before genome assembly[cite: 3].
 
 ```bash
 # Switch to KAT Conda environment
@@ -93,34 +93,29 @@ conda activate kat
 # Calculate k-mer frequency histogram (k=27) on trimmed paired reads
 kat hist -t 8 -m 27 -o anoste_27 SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq
 ```
+
 ### Parameter Breakdown
-- `-t 8`: Uses 8 CPU threads.
-- `-m 27`: Sets k-mer length to *k=27* (standard choice for insect genome surveys).
-- `-o anoste_27`: Output file prefix.
-- Inputs: `SRR11672503_1_paired.fastq` and `SRR11672503_2_paired.fastq`.
-- Generated Output Files: Running `kat hist` automatically creates two output files:
-  - `anoste_27.png`: A visual plot/graph of the k-mer spectrum for quick inspection.
-  - `anoste_27`: The raw text data file containing numerical k-mer counts.
+- `-t 8`: Uses 8 CPU threads[cite: 3].
+- `-m 27`: Sets k-mer length to *k = 27* (standard choice for insect genome surveys)[cite: 3].
+- `-o anoste_27`: Output file prefix[cite: 3].
+- Inputs: `SRR11672503_1_paired.fastq` and `SRR11672503_2_paired.fastq`[cite: 3].
+- Generated Output Files: `anoste_27.hist` (histogram data) and `anoste.png` (k-mer plot).
 
-### Saving and Pushing KAT Outputs  
-Rename the output histogram file and commit it to GitHub:
+### Saving and Pushing KAT Outputs
 ```bash
-# Rename the raw data file so GenomeScope recognizes it
-mv anoste_27 anoste_27.hist
-
 # Commit and push both the plot (.png) and histogram (.hist) to GitHub
-git add anoste_27.hist anoste_27.png
+git add anoste_27.hist anoste.png
 git commit -m "Add KAT k-mer hist27 output"
 git push
 ```
 
-![27-mer spectrum](anoste_27.png)
+![27-mer spectrum](anoste.png)
 
 - Main peak (~96x k-mer coverage): Homozygous genome peak.
 - Small shoulder (~48x): Low heterozygosity.
 
 ### GenomeScope 2.0 Profiling Steps
-1. Open the resulting `anoste_27.hist` histogram file and remove any comment lines at the beginning.
-2. Upload the cleaned histogram file to [GenomeScope 2.0](http://qb.cshl.edu/genomescope/genomescope2.0/).
-3. View pre-computed analysis results at http://genomescope.org/analysis.php?code=97ab6nlVpU3H5hDzfqAy.
-4. **Result:** Estimated haploid genome size is **~227.05 Mbp** (used later as -s 227054799 for polishing with HyPo).
+1. Open the resulting `anoste_27.hist` histogram file and remove any comment lines at the beginning[cite: 3].
+2. Upload the cleaned histogram file to [GenomeScope 2.0](http://qb.cshl.edu/genomescope/genomescope2.0/) and watch out for lower and upper count boundaries[cite: 3].
+3. View pre-computed analysis results at <http://genomescope.org/analysis.php?code=97ab6nlVpU3H5hDzfqAy>.
+4. **Result:** Estimated haploid genome size is **~227.05 Mbp** (used later in polishing with HyPo as `-s 227054799`)[cite: 15].
