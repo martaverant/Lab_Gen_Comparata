@@ -143,7 +143,13 @@ Long-running bioinformatics processes can stop if the SSH connection breaks. `tm
    ```bash
    tmux ls
    ```
+5. **Create a new window in the current session:**  
+   Press <kbd>Ctrl</kbd> + <kbd>a</kbd>, then <kbd>c</kbd> (make sure Caps Lock is off).
 
+6. **Switch between windows:**  
+   - Next window: <kbd>Ctrl</kbd> + <kbd>a</kbd>, then <kbd>n</kbd>  
+   - Previous window: <kbd>Ctrl</kbd> + <kbd>a</kbd>, then <kbd>p</kbd>
+   
 ---
 
 ## 6. Repository Directory Layout
