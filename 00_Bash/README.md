@@ -101,3 +101,7 @@ chmod +x script.sh    # Make script executable
 - **`End` / `Ctrl + e`:** Move cursor to the end of the current line.
 - **`Ctrl + c` (Cancel):** Stops and cancels a running command immediately.
 - **`Ctrl + l` or `clear` (Clear screen):** Clears the terminal window to keep your workspace clean.
+
+
+* **Output Redirection (`-o`, `>`, `>>`):** `-o` specifies an output file name; `>` writes output into a file (overwriting existing content), while `>>` appends output to the end of an existing file.
+* **Symbolic Links (`ln -s`):** Creates shortcuts to large files without duplicating them (cyan = valid link, red = broken link, pink = compressed/image file). Paths can be **relative** (`../`) or **absolute** (`/home/...`).
