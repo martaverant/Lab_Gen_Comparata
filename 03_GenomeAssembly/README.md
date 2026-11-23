@@ -3,7 +3,7 @@
 ## 00_assembly_raw: Get the raw assembly and do a first quality check (BUSCO).
 
 ### 1. De novo Assembly
-The raw draft assembly (`Anoste_raw.fasta`) was generated from PacBio long reads (`SRR11672506.fastq.gz`) inside a `tmux` session using the `assembly` Conda environment (with Flye / wtdbg2):
+The raw draft assembly (`Anoste_raw.fasta`) was generated from PacBio long reads (`SRR11672506.fastq.gz`) inside a `tmux` session using the `assembly` Conda environment (with wtdbg2):
 
 ```bash
 mkdir -p ~/Lab_Gen_Comparata/03_GenomeAssembly/00_assembly_raw
@@ -37,7 +37,7 @@ Copy the pre-assembled `Anoste_raw.fasta` file from a classmate's directory into
 cp /home/STUDENTI/virginia.piccinotti/Anoste_raw.fasta ~/Lab_Gen_Comparata/03_GenomeAssembly/00_assembly_raw/
 ```
 
-### 2. Initial Quality Check (BUSCO)
+### Initial Quality Check (BUSCO)
 We evaluate the completeness of the raw assembly by searching for conserved single-copy orthologs using **BUSCO**. We used two lineage databases in class (`diptera_odb12` and `culicidae_odb12`); I used `diptera_odb12` (which covers a broader taxonomic group across all flies/mosquitoes).
 
 ```bash
@@ -50,6 +50,11 @@ conda activate sequence
 # Set max threads and run BUSCO in genome mode (-m geno)
 export NUMEXPR_MAX_THREADS=80
 busco -m geno -l $BUSCO/diptera_odb12 -c 8 -o Anoste_raw -i Anoste_raw.fasta
+
+git add Anoste_raw/short_summary.specific.diptera_odb12.Anoste_raw.txt
+git pull
+git commit -m "QC BUSCO on raw assembly"
+git push
 ```
 
 Parameter Breakdown
@@ -67,18 +72,15 @@ git push
 
  
 ## 01_polishing: Map short and long reads (minimap2 + samtools in mapping.sh), calculate coverage (mosdepth), polish the assembly (hypo) and check the quality again (BUSCO & KAT).
-Long-read assemblies often contain small base-level errors (especially indels). We polish the raw assembly using **HyPo**, which combines accurate Illumina short reads with PacBio long reads.
+Long-read assemblies often contain small base-level errors (especially indels). We polish the raw assembly using **hypo**, which combines accurate Illumina short reads with PacBio long reads to improve base accuracy (qualitative improvement).
 
-### 1. Read Mapping & Creating a Bash Script (`mapping.sh`)
+### Read Mapping & Creating a Bash Script (`mapping.sh`)
 
 #### Key Concepts & Workflow
-* **Read Mapping:** Aligning sequencing reads onto the draft assembly (`Anoste_raw.fasta`) to find where each read originates on the contigs. **HyPo** needs these alignments to detect and correct base errors.
-* **SAM vs. BAM:** `minimap2` outputs alignments in **SAM** format (plain text, very large). Using `samtools`, we convert it into **BAM** format (compressed binary, saves disk space), delete the raw `.sam` file, and then **sort** and **index** (`.bai`) the BAM file for fast access.
-* **Bash Scripting (`mapping.sh`):** A `.sh` script is a text file containing a list of commands that the computer executes automatically one after another. We create it with `nano` and inspect it with `cat` or `less` (see also `00_Bash`):
-  * **Shebang (`#!/bin/bash`):** Placed at the very top of the script so the system knows to execute the commands using Bash. Lines starting with `#` are comments and are ignored.
-  * **Variables (`$1`, `$2`, ...):** Placeholders for command-line arguments (`CPU=$1`, `INPUT=$2`, etc.) so the script stays reusable for any dataset.
-  * **Output Redirection (`-o`, `>`, `>>`):** `-o` specifies an output file name; `>` writes output into a file (overwriting existing content), while `>>` appends output to the end of an existing file.
-* **Symbolic Links (`ln -s`):** Creates shortcuts to large files without duplicating them (cyan = valid link, red = broken link, pink = compressed/image file). Paths can be **relative** (`../`) or **absolute** (`/home/...`).
+* **Read Mapping:** Aligns sequencing reads onto `Anoste_raw.fasta` so hypo can detect and correct base errors.
+* **SAM vs. BAM:** `minimap2` outputs alignments in SAM format (plain text, very large). `samtools` converts it into compressed binary BAM format, sorts it, and creates an index (`.bai`).
+* **Bash Scripting (`mapping.sh`):** Starts with #!/bin/bash (shebang) and uses positional arguments ($1, $2, ...) so the script remains reusable.
+
 
 #### Setup & Script Execution
 Create the working directory, link the required input files, and write a reusable Bash script (`mapping.sh`) to align both short and long reads against `Anoste_raw.fasta` using `minimap2` and `samtools`:
@@ -93,8 +95,7 @@ ln -s ../../02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq .
 ln -s ../../02_KmerBased_GenomeSurvey/SRR11672503_2_paired.fastq .
 ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/00_reads/SRR11672506.fastq.gz .
 
-
-Create the script using `nano mapping.sh` (save with `Ctrl + s`, exit with `Ctrl + x`) and verify its content with `cat mapping.sh`, `head mapping.sh`, or `less mapping.sh`:
+Create the script using `nano mapping.sh` (save with `Ctrl + s`, exit with `Ctrl + x`) and verify its content with `cat mapping.sh`, `head mapping.sh`, or `less mapping.sh` (exit qith q):
 
 ```bash
 #!/bin/bash
@@ -107,15 +108,15 @@ SR_2=$4
 PREFIX=$5
 
 # Mapping short reads with minimap2 (-ax sr: short reads)
-minimap2 -ax sr --MD -t "$CPU" "$INPUT" "$SR_1" "$SR_2" > "$PREFIX".sam
+minimap2 -ax sr --MD -t "$CPU" "$INPUT" "$SR_1" "$SR_2" > "$PREFIX"_sr.sam
 
 # Conversion SAM into BAM
-samtools view -b "$PREFIX".sam > "$PREFIX".bam
+samtools view -b "$PREFIX"_sr.sam > "$PREFIX"_sr.bam
 rm "$PREFIX".sam
 
 # Sorting and indexing of BAM file
-samtools sort -@"$CPU" -o "$PREFIX"_sorted.bam "$PREFIX".bam
-samtools index "$PREFIX"_sorted.bam
+samtools sort -@"$CPU" -o "$PREFIX"_sr_sorted.bam "$PREFIX"_sr.bam
+samtools index "$PREFIX"_sr_sorted.bam
 
 
 # Mapping LONG reads (-ax map-pb: long read in one direction)
@@ -137,12 +138,7 @@ conda activate assembly
 bash mapping.sh 8 Anoste_raw.fasta SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq Anoste_pol SRR11672506.fastq.gz
 ```
 
-
-ok fino qua tutto fattto poi unvollständig... 
-
-
-
-### 2. Linking Pre-computed BAM Files & Calculating Coverage (`mosdepth`)
+### Linking Pre-computed BAM Files & Calculating Coverage (`mosdepth`)
 
 #### Disk Space Issue & Symbolic Links
 Because running the mapping script for all reads failed due to insufficient space on the server, we linked the pre-computed sorted `.bam` and `.bai` files (along with Mirko's raw assembly) directly from the practice folder to proceed with polishing:
@@ -176,7 +172,28 @@ zcat + awk: Unzips the regions bed file (zcat), sums up the coverage values of c
 zcat Anoste_SR.regions.bed.gz | awk '{sum += $4; count++} END {print sum / count}' > Anoste_SR_coverage.txt
 zcat Anoste_PB.regions.bed.gz | awk '{sum += $4; count++} END {print sum / count}' > Anoste_PB_coverage.txt
 
-### 3. Polish the Assembly (`hypo`)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Polish the Assembly (`hypo`) and Post_Polishing QC (BUSCO + KAT)
 
 Now that we have the alignments (`.bam`), the calculated coverage, and the draft assembly, we can run **hypo** (Hybrid Polishing) to correct base-level errors and indels.
 
