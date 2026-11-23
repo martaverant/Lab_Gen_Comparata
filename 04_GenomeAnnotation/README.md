@@ -16,3 +16,7 @@ idea domanda biologica (variabilita biologica di zanzare) altre 4-5 specie nei d
 che possono essere per Anoste (non deve essere il centro) puo essere anche il outgroup, ma deve essere dentro 
 puo essere un po di tutto 
 su NCBI 
+
+recuperare 23/11/26
+
+
