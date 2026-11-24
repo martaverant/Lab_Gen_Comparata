@@ -135,10 +135,31 @@ done < "$AN2name"
 conda activate sequence
  bash download_dataset.sh diptera_dataset.tsv
 
+cp /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/04_GenomeAnnotation/00_round1/Anoste_rnd1.maker.output/maker1.tar.gz . 
+script: 
 
+ tar -z -xf maker1.tar.gz
+ 
+conda activate assembly
 ~/Lab_Gen_Comparata/04_GenomeAnnotation/00_round1$
   fasta_merge -d Anoste_rnd1_master_datastore_index.log
   gff3_merge -d Anoste_rnd1_master_datastore_index.log
 
-  
-  
+
+less -S Anoste_rnd1.all.gff (non mi ricordo cosa fa, cromosomes, ecc. )
+less -S Anoste_rnd1.all.maker.proteins.fasta (mostra i proteine, non mi ricordo bene cosa fa) 
+less -S Anoste_rnd1.all.maker.transcripts.fasta (mostra trascripts) 
+grep ">" (bo non mi ricordo il commando) 11543 proteine
+recuperare cosa sono questi file 
+
+
+
+conda activate GAAS
+agat_sp_statistics.pl --gff Anoste_rnd1.all.gff -o Anoste_rnd1_model_stats.log #Summary statistics of gene models
+agat_sq_repeats_analyzer.pl -i Anoste_rnd1.all.gff -o Anoste_rnd1_repeats.log #Summary statistics of repeats
+
+SNAP
+
+
+
+
