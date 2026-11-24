@@ -94,6 +94,7 @@ ln -s ../00_assembly_raw/Anoste_raw.fasta .
 ln -s ../../02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq .
 ln -s ../../02_KmerBased_GenomeSurvey/SRR11672503_2_paired.fastq .
 ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/00_reads/SRR11672506.fastq.gz .
+```
 
 Create the script using `nano mapping.sh` (save with `Ctrl + s`, exit with `Ctrl + x`) and verify its content with `cat mapping.sh`, `head mapping.sh`, or `less mapping.sh` (exit qith q):
 
@@ -106,13 +107,14 @@ INPUT=$2
 SR_1=$3
 SR_2=$4
 PREFIX=$5
+LR=$6
 
 # Mapping short reads with minimap2 (-ax sr: short reads)
 minimap2 -ax sr --MD -t "$CPU" "$INPUT" "$SR_1" "$SR_2" > "$PREFIX"_sr.sam
 
 # Conversion SAM into BAM
 samtools view -b "$PREFIX"_sr.sam > "$PREFIX"_sr.bam
-rm "$PREFIX".sam
+rm "$PREFIX"_sr.sam
 
 # Sorting and indexing of BAM file
 samtools sort -@"$CPU" -o "$PREFIX"_sr_sorted.bam "$PREFIX"_sr.bam
@@ -165,6 +167,7 @@ mosdepth -n --fast-mode --by 500 Anoste_SR Anoste_raw_sr_sorted.bam
 # Compute the mean coverage across all windows
 zcat Anoste_SR.regions.bed.gz | awk '{sum += $4; count++} END {print sum / count}' > Anoste_SR_coverage.txt
 zcat Anoste_PB.regions.bed.gz | awk '{sum += $4; count++} END {print sum / count}' > Anoste_PB_coverage.txt
+```
 
 # Parameter & Tool Breakdown (mosdepth)
 *-n: Skips generating the coverage file for every single base (saves disk space and time).
@@ -174,7 +177,7 @@ zcat Anoste_PB.regions.bed.gz | awk '{sum += $4; count++} END {print sum / count
 zcat + awk: Unzips the regions bed file (zcat), sums up the coverage values of column 4 (sum += $4), counts the lines (count++), and calculates the final average (sum / count).
 
 Results: Mean short-read coverage = `136.412` (`-c 136` for HyPo); mean PacBio long-read coverage = `102.621`.
-```
+
 
 ### Polish the Assembly (`hypo`) and Post_Polishing QC (BUSCO + KAT)
 
@@ -204,6 +207,7 @@ Parameter Breakdown (HyPo)
 -t 8: Number of CPU threads
 
 #### Post-Polishing: BUSCO and KAT Quality Control
+Polishing corrects punctual base errors (base calling), allowing us to recover more complete genes (qualitative improvement). Meanwhile, assembly contiguity (`N50`, contig count) does not change (quantitative metrics remain the same until contigs are joined during scaffolding).  
 Because `bbtools` inside BUSCO fails on single-line FASTA files produced by hypo, we first wrap the sequences to 80 characters per line using `fold`:
 
 ```bash
@@ -224,275 +228,175 @@ ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_Genom
 
 kat comp -t 9 -o Anoste_pol_kat 'SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq' Anoste_pol.fasta
 ```
+![KAT spectra-cn plot](01_polishing/Anoste_pol_kat-main.mx.spectra-cn.png)
 
-10/11/2026
-tuttoo andato per sbaglio ho chiuso la finestra 
-tutta la parte manca di quantitativo e qualitativo 
-busco miglioramento qualitativo perché aumenta i numeri di geni -> cambia le basi 
-poi bo non mi ricordo recuperarlo dalla registrazione audio 
-
-
-tumx ls
-tmux a -t mapping (ricordatelo!!!)
-sarebbe anche utile scrivere un foglie con tutti i comandi che sono neccessario per muovere dagli screen ecc., per chiudere i screen (contol a + x penso non sono sicura) per i commandi che sono importanti, prima o poi li dobbiamo sapere!!  
-
-rinomina:  mv hypo_Anoste_raw.fasta Anoste_pol.fasta
-conda activate sequence (perché busco lavora con sequence) 
-export NUMEXPR_MAX_THREADS=<CPU_NUMBER>
-export NUMEXPR_MAX_THREADS=80
-busco -m <MODE> -l <LINEAGE> -c <CPU_NUMBER> -o <OUTPUT_NAME> -i <INPUT>
-busco -m geno -l $BUSCO/diptera_odb12 -c 9 -o Anoste_pol -i Anoste_pol.fasta (busco crea una cartella nel output) 
-non è andato perché non è andato 
-diversi programmi non infastidito come viene formatato un file fasta
-one line (header fasta, header fasta) 
-multi line fasta (forzatamente il programma va da capo) più leggibile
-se la riga è troppo lunga non funziona 
-raw.fasta va a capo e il nuovo file non va da capo 
-
-come lo spezzettiamo? 
-fold -w <n_characters> <input.fasta> > <output.fasta>
-fold -w 80 Anoste_pol.fasta > Anoste_pol_multi.fasta
-less -S Anoste_pol_multi.fasta per controllare 
-less -S Anoste_pol.fasta (q per uscire)
-rm Anoste_pol.fasta
-mv Anoste_pol_multi.fasta Anoste_pol.fasta
-rm -r Anoste_pol (rimuovere la cartella)
-busco -m geno -l $BUSCO/diptera_odb12 -c 9 -o Anoste_pol -i Anoste_pol.fasta
-
-kat (control qualitativo) 
-conda activate kat
-per creare i paths:
-ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq .
-ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_2_paired.fastq .
- 
-kat comp -t <NUM_THREADS> -o <OUTPUT_PREFIX> '<FASTQ>...' <ASSEMBLY>
-kat comp -t 9 -o Anoste_pol_kat 'SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq' Anoste_pol.fasta
- 
-Anoste_pol_kat-main.mx.spectra-cn.png (inserire l'immagine kat) 
 
 ## 02_contaminants: Find contaminants (BlobTools) and remove non-Arthropoda contigs using grep and awk.
+When we sequence a whole mosquito (*Anopheles stephensi*), we also get DNA from bacteria living in its gut or on its skin (for example, *Pseudomonadota* / *Serratia*)[cite: 4, 10]. We use **BlobTools** to check which contigs belong to the mosquito and which ones are bacteria, and then we delete the bacterial contigs.
 
-genome assembly 02
-identificare le contaminazioni e eliminarle
-re mapping -> vedi script del mapping
-nuovo segno la barretta verticale | -> concatenazione dei comandi 
-usare l'output per l'input (?giusto?) 
-mapping 2 passaggio sam in bam, rimosso il sam 
-possiamo farlo in un unico passaggio del file contemporaneo
-non crea un file intermedio = appiccicare vari comandi insieme, uno al altro 
-il mapping non facciamo (abbiamo gia fatto) 
+### 1. Prepare Mapping and Taxonomic Data (Done by Mirko)
+*(Note: These two steps take a lot of server time and space, so Mirko ran them for us. I write them down here so anyone can repeat the whole workflow).*
 
-annotazione tassonomica (specie, classe di geni, ecc) 
-posso creare la database structure, come e quale rimuovere?, questi commandi vanno anche messi nel quaderno di laboratorio!!!, una persona deve essere informata, noi non stiamo lanciando, ma questi commandi sono stati lanciati da Mirko -> li prendiamo da lui, sempre deve essere cosi tutto deve essere riconoscibile, provare a completarli!!! 
-minimap2, de essere completato da re-mapping non con quelli originali, è simile allo script ma non è uguali, chiedere a Mikro se abbiamo dubbio anche per mail
+#### Map the short reads back onto the polished assembly (`minimap2` + `samtools`):**
+We use a pipe (`|`) to connect two commands directly. This creates a compressed BAM file right away, without saving a huge temporary SAM file:
 
-
-minimap2 --secondary=no --MD -ax sr -t <NUMBER_CORE> <ASSEMBLY> <FASTQ_R1> <FASTQ_R2> | samtools view -Sb - > <OUT_BAMFILE>.bam
-samtools sort -@<n_cores> -o <OUT_SORTED_BAMFILE>_sorted.bam Anoste_pol.bam
+```bash
+minimap2 --secondary=no --MD -ax sr -t 8 Anoste_pol.fasta \ SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq \ | samtools view -Sb - > Anoste_pol.bam
+samtools sort -@8 -o Anoste_pol_sorted.bam Anoste_pol.bam
 rm Anoste_pol.bam
 samtools index Anoste_pol_sorted.bam
+```
+#### Find out which species each contig comes from (blastn):
+We compare every contig against the NCBI database (nt) to see if it matches a mosquito or a bacterium:
+```bash
+export BLASTDB=/DATABIG/dbs/NCBI/nt
 
-blastn
-blastn -query <ASSEMBLY> -db <PATH/TO/nt/> -outfmt '6 qseqid staxids bitscore std sscinames sskingdoms stitle' -max_target_seqs 25 -max_hsps 1 -num_threads 25 -evalue 1e-25 -out <OUTFILE>
+blastn -query Anoste_pol.fasta -db nt \
+  -outfmt '6 qseqid staxids bitscore std sscinames sskingdoms stitle' \
+  -max_target_seqs 25 -max_hsps 1 -num_threads 8 -evalue 1e-25 \
+  -out Anoste_blast.tsv
+```
+#### Run BlobTools to See the Contaminants
+First, we create a new folder, link the big input files, and run blobtools to create a table and plots:
+```bash
+mkdir -p ~/Lab_Gen_Comparata/03_GenomeAssembly/02_contaminants
+cd ~/Lab_Gen_Comparata/03_GenomeAssembly/02_contaminants
 
-non sappiamo questo: -db <PATH/TO/nt/> -> ricordarlo prossima settimana di dirci!!! 
-
-per Blobtools: 
-nuova caretlla: 
-mkdir 02_contaminants
-cd 02_contaminants/
-
-blobtools create -i <ASSEMBLY> -b <MAPPING_FILE> -t <BLASTN_FILE> -o <OUTPUT_PREFIX>
-blobtools view -i <JSON_FILE> -o <OUTPUT_PREFIX>
-blobtools plot -i <JSON_FILE> -o <OUTPUT_PREFIX>
-
-file molto grandi -> fare il link dei input (non abbiamo Mapping, blastn) 
-ln -s ../01_polishing/Anoste_pol.fasta (link del assembly)
+# Create shortcuts (links) to the input files
+ln -s ../01_polishing/Anoste_pol.fasta .
 ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/02_contaminants/Anoste_pol_sorted.bam .
 ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/02_contaminants/Anoste_pol_sorted.bam.bai .
 ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/02_contaminants/Anoste_blast.tsv .
 
-blob -> sequence (importqante sempre verificare che sei nella envirnment giusta) 
+# Activate the sequence environment and run BlobTools
+conda activate sequence
 blobtools create -i Anoste_pol.fasta -b Anoste_pol_sorted.bam -t Anoste_blast.tsv -o Anoste_blob
-
-mentre guardiamo il fle busco: 
-cd Lab_Gen_Comparata/03_GenomeAssembly/01_polishing
-cd Anoste_pol
-cat short_summary.specific.diptera_odb12.Anoste_pol.txt
-ma accanto anche quello raw
-~/Lab_Gen_Comparata/03_GenomeAssembly/00_assembly_raw$ cd Anoste_raw/
- cat short_summary.specific.diptera_odb12.Anoste_raw.txt
- 
--> nel polished ho più geni completi (Complete and single-copy BUSCOs) -> il mio polish ha migliorato? si
-miglioramento qualitativo 
-Assembly statistics = sono le stesse 
-ific.diptera_odb12.Anoste_raw.txt
-
-possiamo fare una tabella non i migloramenti: 
-
-Anoste_raw:
-# BUSCO version is: 6.0.0
-# The lineage dataset is: diptera_odb12 (Creation date: 2025-07-01, number of genomes: 76, number of BUSCOs: 5067)
-# Summarized benchmarking in BUSCO notation for file /home/STUDENTI/marta.verant/Lab_Gen_Comparata/03_GenomeAssembly/00_assembly_raw/Anoste_raw.fasta
-# BUSCO was run in mode: euk_genome_min
-# Gene predictor used: miniprot
-
-        ***** Results: *****
-
-        C:96.0%[S:95.2%,D:0.7%],F:0.6%,M:3.5%,n:5067,E:7.0%
-        4863    Complete BUSCOs (C)     (of which 339 contain internal stop codons)
-        4825    Complete and single-copy BUSCOs (S)
-        38      Complete and duplicated BUSCOs (D)
-        29      Fragmented BUSCOs (F)
-        175     Missing BUSCOs (M)
-        5067    Total BUSCO groups searched
-
-Assembly Statistics:
-        850     Number of scaffolds
-        850     Number of contigs
-        224097419       Total length
-        0.000%  Percent gaps
-        20 Mbp  Scaffold N50
-        20 Mbp  Contigs N50
-
-
-Dependencies and versions:
-        hmmsearch: 3.4
-        bbtools: None
-        miniprot_index: 0.18-r281
-        miniprot_align: 0.18-r281
-
-Anoste_pol: 
-# BUSCO version is: 6.0.0
-# The lineage dataset is: diptera_odb12 (Creation date: 2025-07-01, number of genomes: 76, number of BUSCOs: 5067)
-# Summarized benchmarking in BUSCO notation for file /home/STUDENTI/marta.verant/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing/Anoste_pol.fasta
-# BUSCO was run in mode: euk_genome_min
-# Gene predictor used: miniprot
-
-        ***** Results: *****
-
-        C:96.5%[S:95.8%,D:0.7%],F:0.6%,M:2.9%,n:5067,E:7.4%
-        4891    Complete BUSCOs (C)     (of which 361 contain internal stop codons)
-        4854    Complete and single-copy BUSCOs (S)
-        37      Complete and duplicated BUSCOs (D)
-        29      Fragmented BUSCOs (F)
-        147     Missing BUSCOs (M)
-        5067    Total BUSCO groups searched
-
-Assembly Statistics:
-        849     Number of scaffolds
-        849     Number of contigs
-        224753923       Total length
-        0.000%  Percent gaps
-        20 Mbp  Scaffold N50
-        20 Mbp  Contigs N50
-
-
-Dependencies and versions:
-        hmmsearch: 3.4
-        bbtools: None
-        miniprot_index: 0.18-r281
-        miniprot_align: 0.18-r281
--> creare una tabellina con miglioramenti 
-
-## 03_scaffolding: Build chromosome-level scaffolds using a reference genome (RagTag).
-
-comandi importanti, sapera la sintasse base
-perché e anche deve fare le cose corretti. e controllare le cose se sono giuste
-
-grep: è il control + f, cercare
-esempio grep ">ctg" Anoste_pol.fasta -> "parole che voglio cercare" poi file dove lo voglio cercare
-grep ">ctg" Anoste_pol.fasta | wc -l (wc=word count) e -l? (non mi ricorda)
-grep --help |less = lettura interattiva del manuale (uscire con la q)
-esempio -n (in quale riga lo trovo)
-anche -c (la stessa cosa con la pipe (|wc -l)
-
-
-awk
-sed cerca e sostituisci
-
-:~/Lab_Gen_Comparata/03_GenomeAssembly/02_contaminants$ ls
- Anoste_blob.blobDB.json (è uscito questo file) 
-
 blobtools view -i Anoste_blob.blobDB.json -o Anoste
 blobtools plot -i Anoste_blob.blobDB.json -o Anoste
-(2 file .png e due file .txt)
- salvarli (git add, git pull, git commit, git push) 
+```
+# What Each Command Does
+- blobtools create: Combines our assembly (-i), the read mapping (-b), and the BLAST species hits (-t) into one JSON file (Anoste_blob.blobDB.json).
+- blobtools view: Creates a text table (Anoste.Anoste_blob.blobDB.table.txt) showing the species, GC content, and coverage for each contig.
+- blobtools plot: Draws .png graphs so we can visually spot bacterial contigs.
 
- You can download and inspect .png files directly. A common way to observe the table file, instead, is:
+![BlobPlot](02_contaminants/Anoste.Anoste_blob.blobDB.json.bestsum.phylum.p8.span.100.blobplot.bam0.png)
+
+#### Remove Non-Arthropoda Contigs (grep and awk)
+Next, we make a list of all contigs that do not belong to Arthropoda (column 6 in the table) and delete them from our FASTA file:
+
+```bash
+# Save the names of all non-Arthropoda contigs in a list
+grep -v '^#' Anoste.Anoste_blob.blobDB.table.txt | awk '$6 != "Arthropoda" {print $1}' > contaminants_contigs.txt
+
+# Remove those contigs from the FASTA file
+awk '{ if ((NR>1)&&($0~/^>/)) { printf("\n%s", $0); } else if (NR==1) { printf("%s", $0); } else { printf("\t%s", $0); } }' Anoste_pol.fasta \
+  | grep -w -v -Ff contaminants_contigs.txt - \
+  | tr "\t" "\n" > Anoste_pol_nocont.fa
+```
+# Explanation of the Commands
+- grep -v '^#': Ignores the header lines that start with #.
+- awk '$6 != "Arthropoda" {print $1}': Looks at column 6 (phylum). If it is not Arthropoda, it prints column 1 (the contig name).
+- First awk command: Puts each FASTA header and its DNA sequence on a single line (>header\tsequence) so grep can filter whole sequences easily.
+- grep -w -v -Ff contaminants_contigs.txt -:
+  - -w: Matches the exact contig name only.
+  - -v: Keeps everything except the names in our contaminant list.
+  - -F / -f: Reads the exact names directly from contaminants_contigs.txt.
+  - -: Reads the data coming from the awk pipe.
+- tr "\t" "\n": Turns the tab (\t) back into a new line (\n) so we get a normal FASTA file again.
+
+#### Quality Check After Cleaning (BUSCO)
+Finally, we wrap the lines to 80 characters and run BUSCO again to make sure we did not lose any mosquito genes:
+```bash
+fold -w 80 Anoste_pol_nocont.fa > Anoste_pol_nocont_multi.fa
+conda activate sequence
+export NUMEXPR_MAX_THREADS=80
+busco -m geno -l $BUSCO/diptera_odb12 -c 8 -o Anoste_nocont -i Anoste_pol_nocont_multi.fa
+```
 
 
+| Metric | Anoste_raw (Raw) | Anoste_pol (Polished) | Change / Effect |
+| :--- | :--- | :--- | :--- |
+| **Complete BUSCOs (C)** | 96.0% (4,863) | **96.5% (4,891)** | **+0.5% (+28 geni)** |
+| **Complete & Single-Copy (S)** | 95.2% (4,825) | **95.8% (4,854)** | **+0.6% (+29 geni)** |
+| **Complete & Duplicated (D)** | 0.7% (38) | 0.7% (37) | -1 gene |
+| **Fragmented BUSCOs (F)** | 0.6% (29) | 0.6% (29) | Invariato (0) |
+| **Missing BUSCOs (M)** | 3.5% (175) | **2.9% (147)** | **-0.6% (-28 geni)** |
+| **Number of Contig / Scaffold** | 850 | 849 | -1 contig |
+| **Total Lenght (bp)** | 224,097,419 | 224,753,923 | +656,504 bp |
+| **Contig / Scaffold N50** | 20 Mbp | 20 Mbp | Unchanged (0) |
+
+### Qualitative vs. Quantitative Evaluation
+- **Qualitative improvement (BUSCO):** Polishing with **HyPo** fixed single-base errors in the DNA sequence. Because the sequence is now more accurate, BUSCO found **+28 more complete genes** (completeness went up from `96.0%` to `96.5%`, and missing genes dropped from `175` to `147`).
+- **Quantitative contiguity (Assembly Stats):** The overall structure of the assembly stayed almost the same (`N50 = 20 Mbp`, `849` vs. `850` contigs). Polishing only fixes errors *inside* existing pieces—it does not connect contigs into larger scaffolds[cite: 2, 12].
 
 
-awk '{ if ((NR>1)&&($0~/^>/)) { printf("\n%s", $0); } else if (NR==1) { printf("%s", $0); } else { printf("\t%s", $0); } }' in.fa | grep -w -v -Ff patterns.txt - | tr "\t" "\n" > out.fa
-#The first part ensures the FASTA is in one-line form and reformats the file, obtaining">header\tsequence". This makes it easier to process the file with grep. Then it filters out everything in the patterns file, outputting a one-line FASTA file with only the desired contigs.
+## 03_scaffolding: Build chromosome-level scaffolds using a reference genome (RagTag).
+After polishing and removing bacterial contaminants, our assembly still consists of many separate pieces (contigs). In the final step of genome assembly, we use **RagTag** to order and orient our contigs into full chromosome-level scaffolds by comparing them against an official NCBI reference genome of *Anopheles stephensi* (`GCF_013141755.1`).
 
- trasforma un fasta la struttura header fasta viene persa. la struttura diventa una nuova tabella. ci è utile grep funziona a righe e non a colonne
- -> passaggio intermedio per utilizzare grep
+### Setup and Link Input Files
+Create the working directory and create symbolic links (`ln -s`) to our cleaned assembly (`Anoste_pol_nocont.fa`) and the NCBI reference genome:
 
- With:
+```bash
+mkdir -p ~/Lab_Gen_Comparata/03_GenomeAssembly/03_scaffolding
+cd ~/Lab_Gen_Comparata/03_GenomeAssembly/03_scaffolding
 
--w #ensures it matches the exact name
--v #invert the recognised pattern
--Ff #compares directly to file
-'-' #use stdin as input from the previous command (placeholder)
-To use it, we need to create a file listing all contaminated contigs. To do so, we need to decide which parameters to use to filter our blobDB_table.
+# Link cleaned assembly and NCBI reference genome
+ln -s ../02_contaminants/Anoste_pol_nocont.fa .
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/01_Anoste_reference/GCF_013141755.1_UCI_ANSTEP_V1.0_genomic.fna .
+```
+### Reference-Based Misassembly Correction & Scaffolding
+Activate the assembly environment and run RagTag:
+- ragtag.py correct: Checks for structural errors (misassemblies) in our contigs by aligning them to the reference genome and breaks chimeric contigs if needed.
+- ragtag.py scaffold: Orders and connects the corrected contigs into chromosome-level scaffolds (inserting N gaps between them).   
 
-tr = trasformazione \t \n ->nuova line e ??? bohh
-
-creaiamo il file pattern prima: 
-uttilizzando grep 
-
-grep -v '^#' Anoste_blobDB_table.txt | head
-togliere header
-trovare tutti i contings che non sono artropoda:
-grep -v '^#' Anoste.Anoste_blob.blobDB.table.txt | awk '$6 != "Arthropoda"' | head
-grep -v '^#' Anoste.Anoste_blob.blobDB.table.txt | awk '$6 != "Arthropoda" {print $1}' | head
-grep -v '^#' Anoste.Anoste_blob.blobDB.table.txt | awk '$6 != "Arthropoda" {print $1}' > contaminants_contings.txt
-
-
-adesso usiamo il awk: 
-awk '{ if ((NR>1)&&($0~/^>/)) { printf("\n%s", $0); } else if (NR==1) { printf("%s", $0); } else { printf("\t%s", $0); } }' in.fa | grep -w -v -Ff patterns.txt - | tr "\t" "\n" > out.fa
-
-awk '{ if ((NR>1)&&($0~/^>/)) { printf("\n%s", $0); } else if (NR==1) { printf("%s", $0); } else { printf("\t%s", $0); } }' Anoste_pol.fasta | grep -w -v -Ff contaminants_contings.txt - | tr "\t" "\n" > Anoste_pol_nocont.fa
-
-abbiamo creato il nostro assembly senza contaminazioni
-
-Reference-based scaffolding:
-ultimo comando per completare il assembly: 
-mkdir 03_scaffolding
-ln -s ../02_contaminants/Anoste_pol_nocont.fa
-ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/01_Anoste_reference/GCF_013141755.1_UCI_ANSTEP_V1.0_genomic.fna . 
--> da ncbi (con assession (??) number 013141755)
-
+```bash
 conda activate assembly
-ragtag.py correct -t 10 <REFERENCE_GENOME> <DRAFT_GENOME> (t=quanti CPU possiamo uttilizzare)
+
+# Correct potential misassemblies
 ragtag.py correct -t 10 GCF_013141755.1_UCI_ANSTEP_V1.0_genomic.fna Anoste_pol_nocont.fa
-ragtag.py scaffold -C -t 20 -o <OUTPUT_DIR> <REFERENCE_GENOME> <CORRECTED_DRAFTGENOME>
+
+# Order and orient contigs into scaffolds
 ragtag.py scaffold -C -t 10 -o Anoste_chr GCF_013141755.1_UCI_ANSTEP_V1.0_genomic.fna ragtag_output/ragtag.correct.fasta
+```
 
-we do a control of quality: 
+#### Parameter Breakdown (RagTag)
+- -t 10: Number of CPU threads used to speed up alignment.
+- -C: Concatenates all unplaced contigs (sequences that did not map to any chromosome) into a single artificial sequence called chr0.
+- -o Anoste_chr: Output directory name containing ragtag.scaffold.fasta.   
 
+### Extract the 3 Main Chromosomes
+*Anopheles stephensi* has 3 chromosomes (Chromosome X, Chromosome 2, and Chromosome 3). Next, we inspect the scaffold headers and filter out chr0 and small unplaced fragments so that only the 3 true chromosomes remain:
+
+```bash
+# Inspect the first 10 scaffold headers
 grep ">" Anoste_chr/ragtag.scaffold.fasta | head
-nano chromocomes.txt (file of pattern)
+
+# Create a pattern file with nano
+nano chromosomes.txt
 >NC_050201.1_RagTag
 >NC_050202.1_RagTag
 >NC_050203.1_RagTag
 
-we use only that 3 because of interest (these are the true chromosomes)
+# Extract the 3 chromosomes (-A1 prints the matching header line plus 1 sequence line below it)
+grep -A1 -Ff chromosomes.txt Anoste_chr/ragtag.scaffold.fasta | grep -v "^--$" > Anoste_chr.fasta
 
-grep -A1 -Ff Anoste_chr/chromocomes.txt Anoste_chr/ragtag.scaffold.fasta > Anoste_chr.fasta
+# Wrap sequences to 80 characters per line for downstream tools (BUSCO / MAKER)
+fold -w 80 Anoste_chr.fasta > Anoste_chr_multi.fasta
+mv Anoste_chr_multi.fasta Anoste_chr.fasta
+```
 
-è molto poco heterozigosi, 80% è homozigosi (vedi kat, anche quello è un controllo di qualità)
+### Final Quality Control (BUSCO & KAT)
+Finally, we run BUSCO on both the decontaminated assembly (02_contaminants) and the final chromosome-level assembly (Anoste_chr.fasta), and verify k-mer completeness with KAT:
 
-martedi si inizia a lavorare a conto suo ognun olavora in autonomia sui propri dati, fare la tabella!! come spiegato!!
-formato e output ecc. non sono suggerimenti, sono obbligatori 
-tabellina per settimana prossima per martedi !! IMPORTANTE
+```bash
+# BUSCO on chromosome-level assembly
+conda activate sequence
+export NUMEXPR_MAX_THREADS=80
+busco -m geno -l $BUSCO/diptera_odb12 -c 8 -o Anoste_chr_busco -i Anoste_chr.fasta
 
-->>> dovete lanciare il busco su livello scaffold 
-lanciate busco su Anoste chromosome level 
-busco sicoramente su tutti i livelli 
-anche sul decontaminato 
-4 -> busco (raw, polish, decontaminato, scaffold) 
-
-
+# KAT k-mer comparison (confirms ~80% homozygosity and that no true genomic k-mers were lost)
+conda activate kat
+kat comp -t 8 -o Anoste_chr_kat \
+  '/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_2_paired.fastq' \
+  Anoste_chr.fasta
+```
