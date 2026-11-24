@@ -82,7 +82,7 @@ Long-read assemblies often contain small base-level errors (especially indels). 
 * **Bash Scripting (`mapping.sh`):** Starts with #!/bin/bash (shebang) and uses positional arguments ($1, $2, ...) so the script remains reusable.
 
 
-#### Setup & Script Execution
+#### Setup & Script
 Create the working directory, link the required input files, and write a reusable Bash script (`mapping.sh`) to align both short and long reads against `Anoste_raw.fasta` using `minimap2` and `samtools`:
 
 ```bash
@@ -156,11 +156,16 @@ ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/03_GenomeAssembly/
 #### Calculating Short-Read Coverage with mosdepth
 Before running hypo polishing, we need the average short-read coverage (-c). We compute coverage in 500 bp windows using mosdepth and calculate the mean using awk:
 
-# Calculate coverage in 500 bp windows
 ```bash
+# Calculate coverage in 500 bp windows
 mosdepth -n --fast-mode --by 500 Anoste_PB Anoste_raw_pb_sorted.bam
 mosdepth -n --fast-mode --by 500 Anoste_SR Anoste_raw_sr_sorted.bam
-```
+
+
+# Compute the mean coverage across all windows
+zcat Anoste_SR.regions.bed.gz | awk '{sum += $4; count++} END {print sum / count}' > Anoste_SR_coverage.txt
+zcat Anoste_PB.regions.bed.gz | awk '{sum += $4; count++} END {print sum / count}' > Anoste_PB_coverage.txt
+
 # Parameter & Tool Breakdown (mosdepth)
 *-n: Skips generating the coverage file for every single base (saves disk space and time).
 *--fast-mode: Speeds up calculation by semplifing the calculation of coverage.
@@ -168,30 +173,8 @@ mosdepth -n --fast-mode --by 500 Anoste_SR Anoste_raw_sr_sorted.bam
 
 zcat + awk: Unzips the regions bed file (zcat), sums up the coverage values of column 4 (sum += $4), counts the lines (count++), and calculates the final average (sum / count).
 
-# Compute the mean coverage across all windows
-zcat Anoste_SR.regions.bed.gz | awk '{sum += $4; count++} END {print sum / count}' > Anoste_SR_coverage.txt
-zcat Anoste_PB.regions.bed.gz | awk '{sum += $4; count++} END {print sum / count}' > Anoste_PB_coverage.txt
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Results: Mean short-read coverage = `136.412` (`-c 136` for HyPo); mean PacBio long-read coverage = `102.621`.
+```
 
 ### Polish the Assembly (`hypo`) and Post_Polishing QC (BUSCO + KAT)
 
@@ -204,61 +187,43 @@ R1="/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeS
 R2="/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_2_paired.fastq"
 echo -e "$R1\n$R2" > reads.txt
 
-# Then we run HyPo and rename the output file:
+# Then we run hypo and rename the output file:
 
 hypo -d Anoste_raw.fasta -r @reads.txt -s 227054799 -c 136 -b Anoste_raw_sr_sorted.bam -B Anoste_raw_pb_sorted.bam -t 8
-```
-# Rename output file for clarity
+
 mv hypo_Anoste_raw.fasta Anoste_pol.fasta
+```
 
 Parameter Breakdown (HyPo)
--d: Draft assembly FASTA file (Anoste_raw.fasta).
--r @reads.txt: Path file listing the paired short-read FASTQ files (preceded by @).
--s 227054799: Approximate haploid genome size (~227.05 Mbp from the GenomeScope survey).
--c 136: Mean short-read coverage calculated via mosdepth (136.412).
--b: Sorted BAM file for short reads.
--B: Sorted BAM file for PacBio long reads.
--t 8: Number of CPU threads.
+-d: Draft assembly FASTA file (Anoste_raw.fasta)
+-r @reads.txt: File listing paths to the paired short reads (prefixed with @)
+-s 227054799: Estimated haploid genome size (~227.05 Mbp from GenomeScope)
+-c 136: Mean short-read coverage calculated via mosdepth (136.412)
+-b: Sorted BAM file for short reads
+-B: Sorted BAM file for PacBio long reads
+-t 8: Number of CPU threads
 
+#### Post-Polishing: BUSCO and KAT Quality Control
+Because `bbtools` inside BUSCO fails on single-line FASTA files produced by hypo, we first wrap the sequences to 80 characters per line using `fold`:
 
-(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$ zcat Anoste_SR.regions.bed.gz | awk '{sum += $4;count++} END {print sum / count}' > Anoste_SR_coverage.txt
-(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$ cat Anoste_SR_coverage.txt
-soluzione: 136.412
-(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$ zcat Anoste_PB.regions.bed.gz | awk '{sum += $4;count++} END {print sum / count}' > Anoste_PB_coverage.txt
-(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$ cat Anoste_PB_coverage.txt
-soluzione: 102.621
-(assembly) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$
+```bash
+# Wrap single-line FASTA sequences to 80 bp per line
+fold -w 80 Anoste_pol.fasta > Anoste_pol_multi.fasta
+rm Anoste_pol.fasta
+mv Anoste_pol_multi.fasta Anoste_pol.fasta
 
-per lanciare il prossimo script: 
-nano polishing.sh 
-per aprire una finestra con 
-control altro slash o barretta dirtta
-control +a o -> muovere tra le due finestre
+# Run BUSCO on the polished assembly
+conda activate sequence
+export NUMEXPR_MAX_THREADS=80
+busco -m geno -l $BUSCO/diptera_odb12 -c 9 -o Anoste_pol -i Anoste_pol.fasta
 
+# Run KAT k-mer comparison against trimmed short reads
+conda activate kat
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq .
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_2_paired.fastq .
 
-hypo -d <DRAFT_Contigs> -r @<READS_PATH> -s <APPROXIMATE_GENOMESIZE> -c <SHORT_READSCOVERAGE> -b <SORTED_BAM_SR> -B <SORTED_BAM_PB> -t <NUMBER_THREADS>
-
-hypo -d Anoste_raw.fasta -r @<READS_PATH> -s 227054799 -c 136 -b Anoste_raw_sr_sorted.bam -B Anoste_raw_pb_sorted.bam -t 8  
-
-echo -> stampare il standard output
-creare la variabile R1 e R2 nel file delle reads
- R1="/home/PERSONALE/mirko.martini3/Lab_
-                                                                                                                                       │CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq"
-                                                                                                                                       │(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$ R2="/home/PERSONALE/mirko.martini3/Lab_
-                                                                                                                                       │CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_2_paired.fastq"
-                                                                                                                                       │(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$ echo $R1
-                                                                                                                                       │/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq
-                                                                                                                                       │(base) STUDENTI^marta.verant@SGBGA-D142242S:~/Lab_Gen_Comparata/03_GenomeAssembly/01_polishing$
-
-echo -e "$R1\n$R2" > reads.txt
--e (serve a scrivere il \n) \n = a capo/new line
-
-hypo -d Anoste_raw.fasta -r @reads.txt -s 227054799 -c 136 -b Anoste_raw_sr_sorted.bam -B Anoste_raw_pb_sorted.bam -t 8
-
-tirato fuori dallo script e poi lanciarlo 
-
-lo script dobbiamo scrivere che una persona che non ha fatto il corso potrebbe fare la stessa cosa come io 
--> mettere dentro tutto quello che pensiamo sia necessario e utile, è un script personale che dobbiamo fare anche nel futuro, scrivere tutto quello che serve
+kat comp -t 9 -o Anoste_pol_kat 'SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq' Anoste_pol.fasta
+```
 
 10/11/2026
 tuttoo andato per sbaglio ho chiuso la finestra 
