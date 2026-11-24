@@ -135,8 +135,8 @@ done < "$AN2name"
 conda activate sequence
  bash download_dataset.sh diptera_dataset.tsv
 
+maker1:
 cp /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/04_GenomeAnnotation/00_round1/Anoste_rnd1.maker.output/maker1.tar.gz . 
-script: 
 
  tar -z -xf maker1.tar.gz
  
@@ -153,12 +153,40 @@ grep ">" (bo non mi ricordo il commando) 11543 proteine
 recuperare cosa sono questi file 
 
 
-
+busco: a casa su proteine e transcriptomi!! 
+anche controllo della qualità o era fasta_merge e gff3?? :
 conda activate GAAS
 agat_sp_statistics.pl --gff Anoste_rnd1.all.gff -o Anoste_rnd1_model_stats.log #Summary statistics of gene models
 agat_sq_repeats_analyzer.pl -i Anoste_rnd1.all.gff -o Anoste_rnd1_repeats.log #Summary statistics of repeats
 
 SNAP
+craiamo uno script
+
+nano SNAP.sh
+estrarre modelli, creare modelli, ecc. 
+
+maker2zff -c 0 -e 0 -l 80 -x 0.1 -d ../Anoste_rnd1_master_datastore_index.log #To extract gene models based on multiple fil>
+fathom genome.ann genome.dna -gene-stats > Anoste_rnd1_fathom.stats #Print some summary statistics of the selected gene mod>
+fathom genome.ann genome.dna -validate #Validate gene models and print summary statistics. Output is in stdout and cannot b>
+fathom genome.ann genome.dna -categorize 1000 #Extract gene models together with 1000 bp at both ends for training
+fathom uni.ann uni.dna -export 1000 -plus #Export and convert unique genes to strand plus. Typically, only the unique genes>
+
+mkdir forge
+cd forge
+
+forge ../export.ann ../export.dna #call the parameter estimation program, better in another directory
+
+cd ..
+
+hmm-assembler.pl Anoste_rnd1 forge > Anoste_rnd1.hmm
+
+(control Z andare indietro un passaggio nel github)
+conda activate assembly
+
+ mkdir SNAP
+ cd SNAP
+ mv ../SNAP.sh . 
+ bash SNAP.sh 
 
 
 
