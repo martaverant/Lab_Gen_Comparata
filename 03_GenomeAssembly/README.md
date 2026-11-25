@@ -24,7 +24,7 @@ wtdbg2 -x rs -g 227m -t 8 -i SRR11672506.fastq.gz -fo Anoste_raw
 # Step 2: Generate the consensus FASTA sequence from the layout file
 wtpoa-cns -t 8 -i Anoste_raw.ctg.lay.gz -fo Anoste_raw.fasta
 ```
-Parameter Breakdown (wtdbg2 & wtpoa-cns)
+Explanation of the Commands (wtdbg2 & wtpoa-cns)
 -x rs: Sequencing technology preset (PacBio RSII / long reads).
 -g 227m: Expected haploid genome size (~227 Mbp, estimated in the k-mer survey).
 -t 8: Number of CPU threads.
@@ -55,7 +55,7 @@ export NUMEXPR_MAX_THREADS=80
 busco -m geno -l $BUSCO/diptera_odb12 -c 8 -o Anoste_raw -i Anoste_raw.fasta
 ```
 
-Parameter Breakdown
+Explanation of the Commands (BUSCO)
 * -m geno: Genome mode (searches for conserved genes directly in the assembly).
 * -l $BUSCO/diptera_odb12: Lineage dataset ($BUSCO is a position of the computer (a variable) placeholder).
 * -c 8: Uses 8 CPU threads.
@@ -161,7 +161,7 @@ zcat Anoste_SR.regions.bed.gz | awk '{sum += $4; count++} END {print sum / count
 zcat Anoste_PB.regions.bed.gz | awk '{sum += $4; count++} END {print sum / count}' > Anoste_PB_coverage.txt
 ```
 
-# Parameter & Tool Breakdown (mosdepth)
+Explanation of the Commands (mosdepth)
 *-n: Skips generating the coverage file for every single base (saves disk space and time).
 *--fast-mode: Speeds up calculation by semplifing the calculation of coverage.
 *--by 500: Divides the genome into windows of 500 bp and calculates the average coverage per window.
@@ -189,7 +189,7 @@ hypo -d Anoste_raw.fasta -r @reads.txt -s 227054799 -c 136 -b Anoste_raw_sr_sort
 mv hypo_Anoste_raw.fasta Anoste_pol.fasta
 ```
 
-Parameter Breakdown (HyPo)
+Explanation of the Commands (HyPo)
 -d: Draft assembly FASTA file (Anoste_raw.fasta)
 -r @reads.txt: File listing paths to the paired short reads (prefixed with @)
 -s 227054799: Estimated haploid genome size (~227.05 Mbp from GenomeScope)
@@ -233,7 +233,7 @@ When we sequence a whole mosquito (*Anopheles stephensi*), we also get DNA from 
 We use a pipe (`|`) to connect two commands directly. This creates a compressed BAM file right away, without saving a huge temporary SAM file:
 
 ```bash
-minimap2 --secondary=no --MD -ax sr -t 8 Anoste_pol.fasta \ SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq \ | samtools view -Sb - > Anoste_pol.bam
+minimap2 --secondary=no --MD -ax sr -t 8 Anoste_pol.fasta SRR11672503_1_paired.fastq SRR11672503_2_paired.fastq | samtools view -Sb - > Anoste_pol.bam
 samtools sort -@8 -o Anoste_pol_sorted.bam Anoste_pol.bam
 rm Anoste_pol.bam
 samtools index Anoste_pol_sorted.bam
@@ -266,7 +266,7 @@ blobtools create -i Anoste_pol.fasta -b Anoste_pol_sorted.bam -t Anoste_blast.ts
 blobtools view -i Anoste_blob.blobDB.json -o Anoste
 blobtools plot -i Anoste_blob.blobDB.json -o Anoste
 ```
-# What Each Command Does
+Explanation of the Commands (BLOBTOOLS)
 - blobtools create: Combines our assembly (-i), the read mapping (-b), and the BLAST species hits (-t) into one JSON file (Anoste_blob.blobDB.json).
 - blobtools view: Creates a text table (Anoste.Anoste_blob.blobDB.table.txt) showing the species, GC content, and coverage for each contig.
 - blobtools plot: Draws .png graphs so we can visually spot bacterial contigs.
@@ -285,7 +285,7 @@ awk '{ if ((NR>1)&&($0~/^>/)) { printf("\n%s", $0); } else if (NR==1) { printf("
   | grep -w -v -Ff contaminants_contigs.txt - \
   | tr "\t" "\n" > Anoste_pol_nocont.fa
 ```
-# Explanation of the Commands
+Explanation of the Commands
 - grep -v '^#': Ignores the header lines that start with #.
 - awk '$6 != "Arthropoda" {print $1}': Looks at column 6 (phylum). If it is not Arthropoda, it prints column 1 (the contig name).
 - First awk command: Puts each FASTA header and its DNA sequence on a single line (>header\tsequence) so grep can filter whole sequences easily.
@@ -334,7 +334,7 @@ ragtag.py correct -t 10 GCF_013141755.1_UCI_ANSTEP_V1.0_genomic.fna Anoste_pol_n
 ragtag.py scaffold -C -t 10 -o Anoste_chr GCF_013141755.1_UCI_ANSTEP_V1.0_genomic.fna ragtag_output/ragtag.correct.fasta
 ```
 
-#### Parameter Breakdown (RagTag)
+Explanation of the Commands (RagTag)
 - -t 10: Number of CPU threads used to speed up alignment.
 - -C: Concatenates all unplaced contigs (sequences that did not map to any chromosome) into a single artificial sequence called chr0.
 - -o Anoste_chr: Output directory name containing ragtag.scaffold.fasta.   
@@ -352,8 +352,10 @@ nano chromosomes.txt
 >NC_050202.1_RagTag
 >NC_050203.1_RagTag
 
-# Extract the 3 chromosomes (-A1 prints the matching header line plus 1 sequence line below it)
-grep -A1 -Ff chromosomes.txt Anoste_chr/ragtag.scaffold.fasta | grep -v "^--$" > Anoste_chr.fasta
+# Extract the 3 chromosomes (single-line conversion so grep captures the full chromosome sequences)
+awk '{ if ((NR>1)&&($0~/^>/)) { printf("\n%s", $0); } else if (NR==1) { printf("%s", $0); } else { printf("\t%s", $0); } }' Anoste_chr/ragtag.scaffold.fasta \
+  | grep -w -Ff chromosomes.txt - \
+  | tr "\t" "\n" > Anoste_chr.fasta
 
 # Wrap sequences to 80 characters per line for downstream tools (BUSCO / MAKER)
 fold -w 80 Anoste_chr.fasta > Anoste_chr_multi.fasta
@@ -375,6 +377,7 @@ kat comp -t 8 -o Anoste_chr_kat \
   '/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_2_paired.fastq' \
   Anoste_chr.fasta
 ```
+![KAT spectra-cn plot chromosome-level](03_scaffolding/Anoste_chr_kat-main.mx.spectra-cn.png)
  
 ## Assembly Progression Summary (BUSCO `diptera_odb12`, n = 5,067)
 
