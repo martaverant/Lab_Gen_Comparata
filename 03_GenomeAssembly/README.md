@@ -53,11 +53,6 @@ conda activate sequence
 # Set max threads and run BUSCO in genome mode (-m geno)
 export NUMEXPR_MAX_THREADS=80
 busco -m geno -l $BUSCO/diptera_odb12 -c 8 -o Anoste_raw -i Anoste_raw.fasta
-
-git add Anoste_raw/short_summary.specific.diptera_odb12.Anoste_raw.txt
-git pull
-git commit -m "QC BUSCO on raw assembly"
-git push
 ```
 
 Parameter Breakdown
@@ -66,12 +61,6 @@ Parameter Breakdown
 * -c 8: Uses 8 CPU threads.
 * -o Anoste_raw: Output directory name.
 * -i Anoste_raw.fasta: Input raw assembly FASTA file.
-
-safe the file BUSCO: 
-git add short_summary.specific.diptera_odb12.Anoste_raw.txt
-git pull
-git commit -m "QC BUSCO on raw assembly" (-m messaggio)
-git push
 
  
 ## 01_polishing: Map short and long reads (minimap2 + samtools in mapping.sh), calculate coverage (mosdepth), polish the assembly (hypo) and check the quality again (BUSCO & KAT).
