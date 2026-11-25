@@ -65,9 +65,9 @@ git clone git@github.com:martaverant/Lab_Gen_Comparata.git
 | Command | Description |
 | :--- | :--- |
 | `git status` | Shows modified, deleted, or new files |
+| `git pull` | Downloads and merges the latest changes from GitHub to your server |
 | `git add <file>` | Prepares modified files to be saved (stages changes) |
 | `git commit -m "message"` | Saves staged changes locally with a descriptive note |
-| `git pull` | Downloads and merges the latest changes from GitHub to your server |
 | `git push` | Sends your saved local commits to GitHub |
 
 ---
@@ -150,6 +150,9 @@ Long-running bioinformatics processes can stop if the SSH connection breaks. `tm
    - Next window: <kbd>Ctrl</kbd> + <kbd>a</kbd>, then <kbd>n</kbd>  
    - Previous window: <kbd>Ctrl</kbd> + <kbd>a</kbd>, then <kbd>p</kbd>
    
+7. **Close tmux window**
+   -  Press <kbd>Ctrl</kbd> + <kbd>a</kbd>, then <kbd>&</kbd> (then y for confimation)
+
 ---
 
 ## 6. Repository Directory Layout
