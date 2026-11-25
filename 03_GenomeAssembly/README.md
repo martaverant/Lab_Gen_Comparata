@@ -224,7 +224,7 @@ kat comp -t 9 -o Anoste_pol_kat 'SRR11672503_1_paired.fastq SRR11672503_2_paired
 
 
 ## 02_contaminants: Find contaminants (BlobTools) and remove non-Arthropoda contigs using grep and awk.
-When we sequence a whole mosquito (*Anopheles stephensi*), we also get DNA from bacteria living in its gut or on its skin (for example, *Pseudomonadota* / *Serratia*)[cite: 4, 10]. We use **BlobTools** to check which contigs belong to the mosquito and which ones are bacteria, and then we delete the bacterial contigs.
+When we sequence a whole mosquito (*Anopheles stephensi*), we also get DNA from bacteria living in its gut or on its skin (for example, *Pseudomonadota* / *Serratia*). We use **BlobTools** to check which contigs belong to the mosquito and which ones are bacteria, and then we delete the bacterial contigs.
 
 ### 1. Prepare Mapping and Taxonomic Data (Done by Mirko)
 *(Note: These two steps take a lot of server time and space, so Mirko ran them for us. I write them down here so anyone can repeat the whole workflow).*
@@ -305,23 +305,6 @@ export NUMEXPR_MAX_THREADS=80
 busco -m geno -l $BUSCO/diptera_odb12 -c 8 -o Anoste_nocont -i Anoste_pol_nocont_multi.fa
 ```
 
-
-| Metric | Anoste_raw (Raw) | Anoste_pol (Polished) | Change / Effect |
-| :--- | :--- | :--- | :--- |
-| **Complete BUSCOs (C)** | 96.0% (4,863) | **96.5% (4,891)** | **+0.5% (+28 geni)** |
-| **Complete & Single-Copy (S)** | 95.2% (4,825) | **95.8% (4,854)** | **+0.6% (+29 geni)** |
-| **Complete & Duplicated (D)** | 0.7% (38) | 0.7% (37) | -1 gene |
-| **Fragmented BUSCOs (F)** | 0.6% (29) | 0.6% (29) | Invariato (0) |
-| **Missing BUSCOs (M)** | 3.5% (175) | **2.9% (147)** | **-0.6% (-28 geni)** |
-| **Number of Contig / Scaffold** | 850 | 849 | -1 contig |
-| **Total Lenght (bp)** | 224,097,419 | 224,753,923 | +656,504 bp |
-| **Contig / Scaffold N50** | 20 Mbp | 20 Mbp | Unchanged (0) |
-
-### Qualitative vs. Quantitative Evaluation
-- **Qualitative improvement (BUSCO):** Polishing with **HyPo** fixed single-base errors in the DNA sequence. Because the sequence is now more accurate, BUSCO found **+28 more complete genes** (completeness went up from `96.0%` to `96.5%`, and missing genes dropped from `175` to `147`).
-- **Quantitative contiguity (Assembly Stats):** The overall structure of the assembly stayed almost the same (`N50 = 20 Mbp`, `849` vs. `850` contigs). Polishing only fixes errors *inside* existing pieces—it does not connect contigs into larger scaffolds[cite: 2, 12].
-
-
 ## 03_scaffolding: Build chromosome-level scaffolds using a reference genome (RagTag).
 After polishing and removing bacterial contaminants, our assembly still consists of many separate pieces (contigs). In the final step of genome assembly, we use **RagTag** to order and orient our contigs into full chromosome-level scaffolds by comparing them against an official NCBI reference genome of *Anopheles stephensi* (`GCF_013141755.1`).
 
@@ -392,3 +375,19 @@ kat comp -t 8 -o Anoste_chr_kat \
   '/home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_1_paired.fastq /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/02_KmerBased_GenomeSurvey/SRR11672503_2_paired.fastq' \
   Anoste_chr.fasta
 ```
+ 
+## Assembly Progression Summary (BUSCO `diptera_odb12`, n = 5,067)
+
+| Metric | 1. Raw (`Anoste_raw`) | 2. Polished (`Anoste_pol`) | 3. Decontaminated (`Anoste_nocont`) | 4. Chromosome-level (`Anoste_chr`) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Complete BUSCOs (C)** | 96.0% (4,863) | **96.5% (4,891)** | 96.5% (4,892) | **96.6% (4,894)** |
+| **Fragmented BUSCOs (F)** | 0.6% (29) | 0.6% (29) | 0.6% (29) | 0.6% (31) |
+| **Missing BUSCOs (M)** | 3.5% (175) | **2.9% (147)** | 2.9% (146) | **2.8% (142)** |
+| **Number of Scaffolds / Contigs** | 850 | 849 | 621 | **3 scaffolds** (68 contigs) |
+| **Total Length (bp)** | 224,097,419 | 224,753,923 | 215,545,609 | **202,245,274** |
+| **Scaffold / Contig N50** | 20 Mbp | 20 Mbp | 24 Mbp | **88 Mbp** (Scaffold) / 24 Mbp (Contig) |
+
+## Qualitative vs. Quantitative Evaluation
+- **Qualitative evaluation (BUSCO — gene accuracy):** Polishing with **HyPo** fixed single-base sequencing errors, so BUSCO found more complete genes (`96.0%` to `96.5%`). After removing contaminants and scaffolding, gene completeness stayed high at **96.6%** (`4,894` genes).
+- **Decontamination (Genome purity):** Removing bacterial contigs with **BlobTools** cut the contig count from `849` down to `621` (removing ~9.2 Mbp of non-mosquito DNA) without losing any mosquito genes.
+- **Quantitative evaluation (N50 & scaffolds — structure):** Scaffolding with **RagTag** connected the `621` contigs into **3 chromosomes** (`X`, `2`, `3`), increasing **Scaffold N50 from `24 Mbp` to `88 Mbp`**.
