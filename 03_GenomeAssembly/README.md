@@ -1,5 +1,8 @@
 # 03_GenomeAssembly 
-> **Note on Repository Sync:** All intermediate and final QC outputs (BUSCO summaries and KAT/BlobTools plots) are saved in their respective subdirectories and synced to GitHub. For the exact Git workflow (`git pull`, `git add`, `git commit`, `git push`), see the [Git & GitHub Workflow Guide](../01_ComputerEnv_ProjectWorkflow/00_Git_GitHub.md).
+
+> **Note on Repository Sync:** All QC files (BUSCO summaries and KAT/BlobTools plots) are saved in their folders and uploaded to GitHub. See the [Git & GitHub Workflow Guide](../01_CompEnv_ProjectWorkflow/README.md) for the exact Git commands (`git pull`, `git add`, `git commit`, `git push`).
+
+
 ## 00_assembly_raw: Get the raw assembly and do a first quality check (BUSCO).
 
 ### 1. De novo Assembly
