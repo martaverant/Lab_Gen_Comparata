@@ -1,25 +1,53 @@
-# 04_GenomeAnnotation 
-1. Identificare il contenuto ripetitivo del nostro genoma ("masking")
-2. maker -> alligniamento di alta qualita
-3. caratteristiche di altri genomi
-4. proteomi di altri organismi simili -> ci aspettiamo che hanno il core proteomico simile
-5. pipeline anche transcriptoma (va fatto atomaticamente)
-valutazione finale con busco (versione proteoma 9 e 10 milla)
+# 04_GenomeAnnotation
 
-lunedi prossimo la annotazione
--> impiega tantissimo tempo 
-genoma piccola e poi anche fatto male
-secondo giro di annotazione
-e alla fine Mirko ci dara i file finito perche li stoppiamo 
+> **Note on Repository Sync:** All annotation statistics (`AGAT` logs) and `BUSCO` proteome/transcriptome summaries are saved in their folders and uploaded to GitHub. See the [Git & GitHub Workflow Guide](../01_CompEnv_ProjectWorkflow/README.md) for the exact Git commands (`git pull`, `git add`, `git commit`, `git push`).
 
-idea domanda biologica (variabilita biologica di zanzare) altre 4-5 specie nei dipteri 
-che possono essere per Anoste (non deve essere il centro) puo essere anche il outgroup, ma deve essere dentro 
-puo essere un po di tutto 
-su NCBI 
+## Overview & Workflow
+After assembling the 3 chromosomes (`Anoste_chr.fasta`), our genome is just a long string of DNA letters (`A, T, C, G`). **Genome annotation** finds where the genes, exons, and introns are located and saves their coordinates in a `.gff` file, along with the predicted protein and transcript sequences (`.fasta`).
 
-recuperare 23/11/26
+Full genome annotation requires a lot of time. We didn't complete the full annotation ourselves; we only started the commands and ended them earlier, and then Mirko gave us the final results.
 
-mkdir 04_GenomeAnnotation cd 04_GenomeAnnotation/ mkdir 00_round1 mkdir 01_round2 mkdir 02_round3 cd 00_round1/ ln -s ../../03_GenomeAssembly/03_scaffolding/Anoste_chr.fasta ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/02_Annotation/GCF_013141755.1_UCI_ANSTEP_V1.0_protein.faa Anoste.faa ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/02_Annotation/GCF_943734735.2_idAnoGambNW_F1_1_protein.faa Anogam.faa ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/02_Annotation/GCF_000001215.4_Release_6_plus_ISO1_MT_protein.faa Dromel.faa ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/02_Annotation/Anoste_RepeatModeler_library.fa conda activate assembly maker -CTL nano maker_opts.ctl # Dentro modificare:
+1. **Repeat Masking (`RepeatMasker` inside MAKER):** Masks repetitive DNA and transposable elements using a custom repeat library (`Anoste_RepeatModeler_library.fa`) so MAKER does not mistake repeats for real genes.
+2. **Round 1 — Evidence-Based Annotation (`MAKER`):** Aligns known proteins from closely related Diptera species (*Anopheles stephensi*, *Anopheles gambiae*, and *Drosophila melanogaster*) onto our chromosomes (`protein2genome=1`) to create a first set of gene models (`11,543` proteins).
+3. **Round 2 & 3 — *Ab-initio* Gene Prediction (`SNAP` & `Augustus`):** Trains statistical gene-finding models (`SNAP` and `Augustus`) on the best Round 1 gene models to improve gene structures in the next MAKER rounds.
+4. **Quality Control (`AGAT` & `BUSCO`):** Summarizes gene and repeat statistics (`AGAT`) and checks the completeness of the predicted proteins and transcripts (`BUSCO` in `-m prot` and `-m tran` modes).
+
+---
+
+## 00_round1: First Annotation Round (Homology-Based with MAKER)
+
+### Setup and Symbolic Links
+Create the folders for the iterative annotation rounds and link our chromosome-level assembly, reference proteomes, and custom repeat library:
+
+```bash
+mkdir 04_GenomeAnnotation
+cd 04_GenomeAnnotation/
+mkdir 00_round1
+mkdir 01_round2
+mkdir 02_round3
+cd 00_round1/
+
+# Link chromosome-level genome assembly
+ln -s ../../03_GenomeAssembly/03_scaffolding/Anoste_chr.fasta .
+
+# Link homologous protein evidence (Anopheles stephensi, Anopheles gambiae, Drosophila melanogaster)
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/02_Annotation/GCF_013141755.1_UCI_ANSTEP_V1.0_protein.faa Anoste.faa
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/02_Annotation/GCF_943734735.2_idAnoGambNW_F1_1_protein.faa Anogam.faa
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/02_Annotation/GCF_000001215.4_Release_6_plus_ISO1_MT_protein.faa Dromel.faa
+
+# Link custom repeat library (created by Mirko with RepeatModeler)
+ln -s /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/00_data/02_Annotation/Anoste_RepeatModeler_library.fa .
+```
+
+### Generate and Configure MAKER Control Files
+Activate the assembly environment, generate the default MAKER control files (maker_opts.ctl, maker_bopts.ctl, maker_exe.ctl), and edit maker_opts.ctl:
+```bash
+conda activate assembly
+maker -CTL
+nano maker_opts.ctl
+```
+### Key settings edited in maker_opts.ctl:
+```ini
 #-----Genome (these are always required)
 genome=Anoste_chr.fasta #genome sequence (fasta file or fasta embeded in GFF3 file)
 organism_type=eukaryotic #eukaryotic or prokaryotic. Default is eukaryotic
@@ -98,9 +126,77 @@ tries=2 #number of times to try a contig if there is a failure for some reason
 clean_try=0 #remove all data from previous run before retrying, 1 = yes, 0 = no
 clean_up=0 #removes theVoid directory with individual analysis files, 1 = yes, 0 = no
 TMP= #specify a directory other than the system default temporary directory for temporary files
+```
 
-(da Luca) 
-24/11/2026
+### Extract Pre-Computed Round 1 Results and Merge Genome-Wide Files
+MAKER processes each chromosome separately inside nested folders (Anoste_rnd1_datastore). After unpacking Mirko's pre-computed archive (maker1.tar.gz), we use fasta_merge and gff3_merge (reading Anoste_rnd1_master_datastore_index.log) to combine all outputs into single genome-wide files:
+
+```bash
+# Copy and unpack the pre-computed Round 1 archive (maker1):
+cp /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/04_GenomeAnnotation/00_round1/Anoste_rnd1.maker.output/maker1.tar.gz .
+tar -z -xf maker1.tar.gz
+
+# Merge chromosome outputs into single genome-wide FASTA and GFF3 files
+conda activate assembly
+fasta_merge -d Anoste_rnd1_master_datastore_index.log
+gff3_merge -d Anoste_rnd1_master_datastore_index.log
+
+# Count predicted proteins (11,543 proteins)
+grep -c ">" Anoste_rnd1.all.maker.proteins.fasta
+```
+
+#### Explanation of the Output Files
+- Anoste_rnd1.all.gff: The full GFF3 annotation file containing the genomic coordinates (chromosome, start, end, strand) of all predicted genes, mRNAs, exons, repeats, and protein alignments, plus AED quality scores.
+- Anoste_rnd1.all.maker.proteins.fasta: Amino acid sequences of all 11,543 proteins predicted in Round 1.
+- Anoste_rnd1.all.maker.transcripts.fasta: Nucleotide sequences (mRNA) of all predicted transcripts.
+
+### Round 1 Quality Control (AGAT & BUSCO)
+We compute gene model and repeat statistics using AGAT (GAAS environment) and evaluate the completeness of the predicted proteome and transcriptome using BUSCO (sequence environment):
+
+```bash
+# Summary statistics of gene models and repetitive elements
+conda activate GAAS
+agat_sp_statistics.pl --gff Anoste_rnd1.all.gff -o Anoste_rnd1_model_stats.log
+agat_sq_repeats_analyzer.pl -i Anoste_rnd1.all.gff -o Anoste_rnd1_repeats.log
+
+# Check completeness of predicted proteins (-m prot) and transcripts (-m tran) (not -m geno!!)
+conda activate sequence
+export NUMEXPR_MAX_THREADS=80
+busco -m prot -l $BUSCO/diptera_odb12 -c 8 -o Anoste_rnd1_prot_busco -i Anoste_rnd1.all.maker.proteins.fasta
+busco -m tran -l $BUSCO/diptera_odb12 -c 8 -o Anoste_rnd1_tran_busco -i Anoste_rnd1.all.maker.transcripts.fasta
+```
+
+### Train Ab-initio Gene Predictor (SNAP) for Round 2 
+To allow MAKER to predict species-specific genes ab-initio in Round 2, we train a SNAP Hidden Markov Model (Anoste_rnd1.hmm) using our highest-confidence Round 1 gene models (AED <= 0.1):
+
+```bash
+mkdir SNAP
+cd SNAP
+nano SNAP.sh
+```
+#### Content of SNAP.sh
+```bash
+#!/bin/bash
+
+maker2zff -c 0 -e 0 -l 80 -x 0.1 -d ../Anoste_rnd1_master_datastore_index.log # Extract high-confidence gene models in .zff format
+fathom genome.ann genome.dna -gene-stats > Anoste_rnd1_fathom.stats # Print summary statistics of the selected gene models
+fathom genome.ann genome.dna -validate # Validate gene models and print summary statistics to stdout
+fathom genome.ann genome.dna -categorize 1000 # Extract gene models together with 1000 bp at both ends for training
+fathom uni.ann uni.dna -export 1000 -plus # Export and convert unique genes to plus strand
+
+mkdir forge
+cd forge
+forge ../export.ann ../export.dna # Estimate HMM parameters inside a separate directory
+cd ..
+hmm-assembler.pl Anoste_rnd1 forge > Anoste_rnd1.hmm
+```
+##### Run the training script in the assembly environment:
+```bash
+conda activate assembly
+bash SNAP.sh
+```
+
+
 
 ~/Lab_Gen_Comparata/00_data$
  mkdir 00_data
@@ -134,60 +230,6 @@ done < "$AN2name"
 
 conda activate sequence
  bash download_dataset.sh diptera_dataset.tsv
-
-maker1:
-cp /home/PERSONALE/mirko.martini3/Lab_CompGeno/00_practice/04_GenomeAnnotation/00_round1/Anoste_rnd1.maker.output/maker1.tar.gz . 
-
- tar -z -xf maker1.tar.gz
- 
-conda activate assembly
-~/Lab_Gen_Comparata/04_GenomeAnnotation/00_round1$
-  fasta_merge -d Anoste_rnd1_master_datastore_index.log
-  gff3_merge -d Anoste_rnd1_master_datastore_index.log
-
-
-less -S Anoste_rnd1.all.gff (non mi ricordo cosa fa, cromosomes, ecc. )
-less -S Anoste_rnd1.all.maker.proteins.fasta (mostra i proteine, non mi ricordo bene cosa fa) 
-less -S Anoste_rnd1.all.maker.transcripts.fasta (mostra trascripts) 
-grep ">" (bo non mi ricordo il commando) 11543 proteine
-recuperare cosa sono questi file 
-
-
-busco: a casa su proteine e transcriptomi!! 
-anche controllo della qualità o era fasta_merge e gff3?? :
-conda activate GAAS
-agat_sp_statistics.pl --gff Anoste_rnd1.all.gff -o Anoste_rnd1_model_stats.log #Summary statistics of gene models
-agat_sq_repeats_analyzer.pl -i Anoste_rnd1.all.gff -o Anoste_rnd1_repeats.log #Summary statistics of repeats
-
-SNAP
-craiamo uno script
-
-nano SNAP.sh
-estrarre modelli, creare modelli, ecc. 
-
-maker2zff -c 0 -e 0 -l 80 -x 0.1 -d ../Anoste_rnd1_master_datastore_index.log #To extract gene models based on multiple fil>
-fathom genome.ann genome.dna -gene-stats > Anoste_rnd1_fathom.stats #Print some summary statistics of the selected gene mod>
-fathom genome.ann genome.dna -validate #Validate gene models and print summary statistics. Output is in stdout and cannot b>
-fathom genome.ann genome.dna -categorize 1000 #Extract gene models together with 1000 bp at both ends for training
-fathom uni.ann uni.dna -export 1000 -plus #Export and convert unique genes to strand plus. Typically, only the unique genes>
-
-mkdir forge
-cd forge
-
-forge ../export.ann ../export.dna #call the parameter estimation program, better in another directory
-
-cd ..
-
-hmm-assembler.pl Anoste_rnd1 forge > Anoste_rnd1.hmm
-
-(control Z andare indietro un passaggio nel github)
-conda activate assembly
-
- mkdir SNAP
- cd SNAP
- mv ../SNAP.sh . 
- bash SNAP.sh 
-
 
 
 
